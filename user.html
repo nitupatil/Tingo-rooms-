@@ -431,7 +431,11 @@ async function sendOTP(email, otp) {
     method: "POST",
     mode: "no-cors",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, otp })
+    body: JSON.stringify({
+      type: "otp",
+      email: email,
+      otp: otp
+    })
   });
 }
 
@@ -518,7 +522,7 @@ async function resendOTP() {
   startTimer();
 }
 
-/* VERIFY OTP (🔥 FINAL FIX) */
+/* VERIFY OTP */
 async function verifyOTP() {
   const otp = document.getElementById("otpInput").value;
 
@@ -527,7 +531,7 @@ async function verifyOTP() {
     .select("*")
     .eq("email", currentEmail)
     .eq("otp", otp)
-    .gt("otp_expiry", new Date().toISOString()); // ✅ FIX
+    .gt("otp_expiry", new Date().toISOString()); 
 
   if (!data || data.length === 0) {
     alert("Invalid or expired OTP");
