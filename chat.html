@@ -10,7 +10,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
 
 <style>
@@ -26,11 +25,7 @@
   --safe-bottom: 70px;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: 'Inter', sans-serif;
@@ -76,14 +71,56 @@ body {
   transition: background 0.2s;
 }
 
-.back-btn:active {
-  background: #F3F4F6;
-}
+.back-btn:active { background: #F3F4F6; }
 
 .header-title {
   font-weight: 600;
   font-size: 18px;
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+/* SEARCH AREA */
+.search-wrapper {
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 999;
+}
+
+.search-box {
+  position: relative;
+  width: 100%;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: #F3F4F6;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-box input:focus {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.search-box .material-symbols-rounded {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 20px;
 }
 
 /* CHAT LIST VIEW */
@@ -103,11 +140,16 @@ body {
   display: flex;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-  transition: transform 0.2s;
+  transition: transform 0.2s, opacity 0.2s;
+  position: relative;
 }
 
-.chat-item:active {
-  transform: scale(0.98);
+.chat-item:active { transform: scale(0.98); }
+
+/* Inactive faded state */
+.chat-item.inactive {
+  opacity: 0.55;
+  background: #F9FAFB;
 }
 
 .avatar {
@@ -126,9 +168,12 @@ body {
 
 .chat-name {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
   margin-bottom: 4px;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-preview {
@@ -139,11 +184,19 @@ body {
   text-overflow: ellipsis;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
+.status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #FEE2E2;
+  color: #DC2626;
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
+
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
 
 /* ACTIVE CHAT VIEW */
 .chat-box-container {
@@ -181,7 +234,7 @@ body {
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-/* INPUT AREA (Fixed to bottom of App Container) */
+/* INPUT AREA */
 .input-area {
   background: var(--surface);
   padding: 12px 16px;
@@ -202,13 +255,9 @@ body {
   font-family: 'Inter', sans-serif;
   font-size: 15px;
   outline: none;
-  transition: all 0.2s;
 }
 
-.input-area input:focus {
-  border-color: var(--primary);
-  background: var(--surface);
-}
+.input-area input:focus { border-color: var(--primary); background: var(--surface); }
 
 .send-btn {
   background: var(--primary);
@@ -225,8 +274,18 @@ body {
   transition: transform 0.2s;
 }
 
-.send-btn:active {
-  transform: scale(0.9);
+.send-btn:active { transform: scale(0.9); }
+
+/* INACTIVE BANNER */
+.inactive-banner {
+  background: #FEE2E2;
+  color: #DC2626;
+  text-align: center;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-top: 1px solid #FCA5A5;
+  width: 100%;
 }
 
 /* BOTTOM NAV */
@@ -257,26 +316,15 @@ body {
   transition: color 0.2s;
 }
 
-.nav-item.active {
-  color: var(--primary);
-}
-
-.nav-item .material-symbols-rounded {
-  font-size: 24px;
-}
-
+.nav-item.active { color: var(--primary); }
+.nav-item .material-symbols-rounded { font-size: 24px; }
 .nav-item.post-btn .material-symbols-rounded {
-  background: var(--primary);
-  color: white;
-  padding: 8px;
-  border-radius: 12px;
-  margin-top: -20px;
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
-  font-size: 28px;
+  background: var(--primary); color: white; padding: 8px; border-radius: 12px;
+  margin-top: -20px; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); font-size: 28px;
 }
-.nav-item.post-btn span {
-  margin-top: 2px;
-}
+.nav-item.post-btn span { margin-top: 2px; }
+
+.hidden { display: none !important; }
 </style>
 </head>
 
@@ -285,23 +333,35 @@ body {
 <div class="app-container">
 
   <div class="header">
-    <div class="back-btn" id="backBtn" onclick="goBack()" style="display: none;">
+    <div class="back-btn hidden" id="backBtn" onclick="goBack()">
       <span class="material-symbols-rounded">arrow_back</span>
     </div>
     <div class="header-title" id="headerTitle">Messages</div>
+  </div>
+
+  <div class="search-wrapper" id="searchWrapper">
+    <div class="search-box">
+      <span class="material-symbols-rounded">search</span>
+      <input id="searchInput" placeholder="Search chats..." oninput="filterChats()">
+    </div>
   </div>
 
   <div id="chatListView" class="chat-list-container">
     <div class="empty-state">Loading chats...</div>
   </div>
 
-  <div id="activeChatView" class="chat-box-container" style="display:none;"></div>
+  <div id="activeChatView" class="chat-box-container hidden"></div>
 
-  <div class="input-area" id="inputArea" style="display:none;">
+  <div class="input-area hidden" id="inputArea">
     <input id="msgInput" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
     <button class="send-btn" onclick="sendMessage()">
       <span class="material-symbols-rounded" style="font-size: 20px; margin-left: 4px;">send</span>
     </button>
+  </div>
+
+  <div class="inactive-banner hidden" id="inactiveBanner">
+    <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: text-bottom;">info</span>
+    This property is inactive. Chat is read-only.
   </div>
 
   <div class="bottom-nav" id="bottomNav">
@@ -309,7 +369,7 @@ body {
       <span class="material-symbols-rounded">home</span>
       <span>Home</span>
     </div>
-    <div class="nav-item active" onclick="go('chat.html')">
+    <div class="nav-item active" onclick="go(window.location.pathname)">
       <span class="material-symbols-rounded">chat_bubble</span>
       <span>Chat</span>
     </div>
@@ -336,42 +396,43 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const currentUser = JSON.parse(localStorage.getItem("user"));
+if (!currentUser) window.location.href = "user.html";
 
-if (!currentUser) {
-  window.location.href = "user.html";
-}
-
-/* DOM Elements */
+// Elements
 const chatListView = document.getElementById("chatListView");
 const activeChatView = document.getElementById("activeChatView");
 const inputArea = document.getElementById("inputArea");
+const inactiveBanner = document.getElementById("inactiveBanner");
+const searchWrapper = document.getElementById("searchWrapper");
 const bottomNav = document.getElementById("bottomNav");
 const backBtn = document.getElementById("backBtn");
 const headerTitle = document.getElementById("headerTitle");
 const msgInput = document.getElementById("msgInput");
 
+let allChats = [];
 let chatInterval;
 
 /* GET PARAMS */
 const params = new URLSearchParams(window.location.search);
 const chatUserId = params.get("user");
+const roomId = params.get("room");
 
 /* INIT */
-if (chatUserId) {
-  openChat(chatUserId);
+if (chatUserId && roomId) {
+  openChat(chatUserId, roomId);
 } else {
   loadChats();
 }
 
 /* LOAD CHAT LIST */
 async function loadChats() {
-  const { data: messages, error } = await db
+  const { data, error } = await db
     .from("messages")
     .select("*")
     .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
     .order("created_at", { ascending: false });
 
-  if (error || !messages || messages.length === 0) {
+  if (error || !data || data.length === 0) {
     chatListView.innerHTML = `
       <div class="empty-state">
         <span class="material-symbols-rounded" style="font-size: 48px; color: #D1D5DB; margin-bottom: 10px; display: block;">forum</span>
@@ -380,45 +441,59 @@ async function loadChats() {
     return;
   }
 
-  const usersMap = {};
-  const list = [];
+  const map = {};
 
-  for (let msg of messages) {
+  for (let msg of data) {
     const otherId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+    const key = otherId + "_" + msg.room_id;
 
-    if (!usersMap[otherId]) {
-      const { data: user } = await db
-        .from("users")
-        .select("*")
-        .eq("id", otherId)
-        .single();
+    if (!map[key]) {
+      // Use Try/Catch to prevent crashing if user or room was deleted
+      try {
+        const { data: user } = await db.from("users").select("*").eq("id", otherId).single();
+        const { data: room } = await db.from("room_posts").select("*").eq("id", msg.room_id).single();
 
-      usersMap[otherId] = true;
-
-      list.push({
-        user,
-        last: msg.message
-      });
+        if (user && room) {
+          map[key] = {
+            user,
+            room,
+            last: msg.message
+          };
+        }
+      } catch (err) {
+        console.error("Error fetching chat metadata", err);
+      }
     }
   }
 
-  renderList(list);
+  allChats = Object.values(map);
+  renderChats(allChats);
 }
 
-/* RENDER LIST */
-function renderList(list) {
+/* RENDER CHATS */
+function renderChats(list) {
   chatListView.innerHTML = "";
+
+  if (list.length === 0) {
+    chatListView.innerHTML = `<div class="empty-state">No matching chats found.</div>`;
+    return;
+  }
 
   list.forEach(c => {
     let fallbackAvatar = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
     let avatarUrl = (c.user && c.user.avatar_url) ? c.user.avatar_url : fallbackAvatar;
-    let userName = (c.user && c.user.name) ? c.user.name : "Unknown User";
+    
+    // Check Status
+    const isActive = c.room.status === "active";
+    const inactiveClass = isActive ? "" : "inactive";
+    const badgeHtml = isActive ? "" : `<div class="status-badge">Inactive</div>`;
 
     chatListView.innerHTML += `
-      <div class="chat-item" onclick="goToChat('${c.user.id}')">
-        <img class="avatar" src="${avatarUrl}" alt="${userName}">
+      <div class="chat-item ${inactiveClass}" onclick="goToChat('${c.user.id}','${c.room.id}')">
+        ${badgeHtml}
+        <img class="avatar" src="${avatarUrl}" alt="${c.user.name}">
         <div class="chat-info">
-          <div class="chat-name">${userName}</div>
+          <div class="chat-name">${c.user.name} - ${c.room.title}</div>
           <div class="chat-preview">${c.last}</div>
         </div>
       </div>
@@ -426,46 +501,56 @@ function renderList(list) {
   });
 }
 
-/* GO TO CHAT */
-function goToChat(id) {
-  // Uses window.location.pathname to work seamlessly whether named chat.html or chat.html
-  window.location.href = window.location.pathname + "?user=" + id;
+/* SEARCH */
+function filterChats() {
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = allChats.filter(c =>
+    (c.user && c.user.name.toLowerCase().includes(q)) ||
+    (c.room && c.room.title.toLowerCase().includes(q))
+  );
+  renderChats(filtered);
 }
 
-/* OPEN ACTIVE CHAT */
-async function openChat(userId) {
+/* OPEN CHAT */
+async function openChat(userId, roomToLoadId) {
   // UI Toggles
-  chatListView.style.display = "none";
-  bottomNav.style.display = "none"; // Hides bottom nav to make room for keyboard
+  chatListView.classList.add("hidden");
+  searchWrapper.classList.add("hidden"); // Hide search bar during chat
+  bottomNav.classList.add("hidden"); 
   
-  activeChatView.style.display = "flex";
-  inputArea.style.display = "flex";
-  backBtn.style.display = "flex";
+  activeChatView.classList.remove("hidden");
+  backBtn.classList.remove("hidden");
 
-  // Fetch User Info for Header
-  const { data: user } = await db
-    .from("users")
-    .select("*")
-    .eq("id", userId)
-    .single();
+  // Fetch Metadata
+  const { data: user } = await db.from("users").select("*").eq("id", userId).single();
+  const { data: room } = await db.from("room_posts").select("*").eq("id", roomToLoadId).single();
 
-  headerTitle.innerText = user ? user.name : "Chat";
+  headerTitle.innerHTML = `<span onclick="openRoom('${room.id}')" style="color:var(--primary);">${user.name} - ${room.title}</span>`;
 
-  loadMessages(userId);
+  // Status Check for Input Area
+  if (room && room.status === "active") {
+    inputArea.classList.remove("hidden");
+    inactiveBanner.classList.add("hidden");
+  } else {
+    inputArea.classList.add("hidden");
+    inactiveBanner.classList.remove("hidden");
+  }
 
-  // Auto refresh every 3 seconds
-  chatInterval = setInterval(() => loadMessages(userId, false), 3000);
+  loadMessages(userId, roomToLoadId);
+
+  // Poll for messages
+  chatInterval = setInterval(() => loadMessages(userId, roomToLoadId, false), 3000);
 }
 
 /* LOAD MESSAGES */
-async function loadMessages(userId, forceScroll = true) {
+async function loadMessages(userId, roomToLoadId, forceScroll = true) {
   const { data } = await db
     .from("messages")
     .select("*")
+    .eq("room_id", roomToLoadId)
     .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`)
     .order("created_at", { ascending: true });
 
-  // Only re-render if data has changed (prevent screen flickering during interval refresh)
   if (!data) return;
 
   let htmlString = "";
@@ -478,20 +563,16 @@ async function loadMessages(userId, forceScroll = true) {
     `;
   });
 
-  // Check if new message arrived before updating innerHTML
-  if(activeChatView.innerHTML !== htmlString) {
-      activeChatView.innerHTML = htmlString;
-      
-      // Auto-scroll to bottom
-      if (forceScroll || isScrolledToBottom()) {
-        activeChatView.scrollTop = activeChatView.scrollHeight;
-      }
+  if (activeChatView.innerHTML !== htmlString) {
+    activeChatView.innerHTML = htmlString;
+    if (forceScroll || isScrolledToBottom()) {
+      activeChatView.scrollTop = activeChatView.scrollHeight;
+    }
   }
 }
 
-/* HELPER: Check if user is already at the bottom to prevent annoying auto-scroll if reading up */
 function isScrolledToBottom() {
-    return activeChatView.scrollHeight - activeChatView.scrollTop <= activeChatView.clientHeight + 50;
+  return activeChatView.scrollHeight - activeChatView.scrollTop <= activeChatView.clientHeight + 50;
 }
 
 /* SEND MESSAGE */
@@ -499,34 +580,36 @@ async function sendMessage() {
   const text = msgInput.value.trim();
   if (!text) return;
 
-  // Clear input immediately for better UX
   msgInput.value = "";
 
   await db.from("messages").insert({
     sender_id: currentUser.id,
     receiver_id: chatUserId,
+    room_id: roomId,
     message: text
   });
 
-  // Reload messages and force scroll down
-  loadMessages(chatUserId, true);
+  loadMessages(chatUserId, roomId, true);
 }
 
-/* HANDLE ENTER KEY */
 function handleKeyPress(e) {
-  if (e.key === "Enter") {
-    sendMessage();
-  }
-}
-
-/* BACK BUTTON */
-function goBack() {
-  clearInterval(chatInterval);
-  // Drops the ?user= query param to return to the list view
-  window.location.href = window.location.pathname; 
+  if (e.key === "Enter") sendMessage();
 }
 
 /* NAVIGATION */
+function goToChat(user, room) {
+  window.location.href = window.location.pathname + `?user=${user}&room=${room}`;
+}
+
+function openRoom(id) {
+  window.location.href = `roomdetails.html?id=${id}`;
+}
+
+function goBack() {
+  clearInterval(chatInterval);
+  window.location.href = window.location.pathname; 
+}
+
 function go(page) {
   window.location.href = page;
 }
