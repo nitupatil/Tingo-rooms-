@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -175,9 +175,18 @@ body {
 .title {
   font-weight: 600;
   font-size: 17px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   color: var(--text-main);
   line-height: 1.3;
+}
+
+.owner-name {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .details-row {
@@ -246,6 +255,7 @@ body {
   cursor: pointer;
   flex: 1;
   transition: color 0.2s;
+  position: relative;
 }
 
 .nav-item.active {
@@ -320,6 +330,18 @@ body {
     <div class="nav-item" onclick="openChatList()">
       <span class="material-symbols-rounded">chat_bubble</span>
       <span>Chat</span>
+      <div id="msgBadge" style="
+        position:absolute;
+        top:-4px;
+        right:18px;
+        background:red;
+        color:white;
+        font-size:10px;
+        padding:2px 6px;
+        border-radius:50%;
+        display:none;
+        font-weight:bold;
+      "></div>
     </div>
     <div class="nav-item post-btn" onclick="checkLogin('postroom.html')">
       <span class="material-symbols-rounded">add</span>
@@ -349,12 +371,12 @@ async function loadRooms(search = "") {
 
   if (search) {
     query = db.from("room_posts")
-      .select("*")
+      .select("*, users(name)")
       .eq("status", "active") 
       .or(`title.ilike.%${search}%,location.ilike.%${search}%,type.ilike.%${search}%,description.ilike.%${search}%,brokerage_type.ilike.%${search}%`);
   } else {
     query = db.from("room_posts")
-      .select("*")
+      .select("*, users(name)")
       .eq("status", "active"); 
   }
 
@@ -390,7 +412,47 @@ function renderRooms(rooms) {
       img = room.images.split(",")[0];
     }
     
-    let brokerageText = room.brokerage_type ? room.brokerage_type : "Not specified";
+    // BROKERAGE DISPLAY FIX
+    let brokerageText = "";
+    if (room.brokerage_type === "No Brokerage" || !room.brokerage_type) {
+      brokerageText = "🚫 No Brokerage";
+    } else if (room.brokerage_amount) {
+      brokerageText = `💰 Brokerage - ₹ ${room.brokerage_amount}`;
+    } else {
+      brokerageText = `💰 Brokerage - ${room.brokerage_type}`; 
+    }
+
+    // CALL & WHATSAPP BUTTONS LOGIC
+    let actions = "";
+    let btnBaseStyle = "padding:8px; border:none; border-radius:8px; font-weight:600; font-family:'Inter', sans-serif; cursor:pointer; flex: 1; text-align:center; display:flex; align-items:center; justify-content:center; gap:4px;";
+
+    if (room.show_contact && room.contact_number) {
+      actions += `
+        <a href="tel:${room.contact_number}" style="text-decoration:none; display:flex; flex:1;" onclick="event.stopPropagation()">
+          <button style="${btnBaseStyle} background:#10B981; color:white; width:100%;">
+            📞 Call
+          </button>
+        </a>
+      `;
+    }
+
+    if (room.show_whatsapp && room.whatsapp_number) {
+      actions += `
+        <a href="https://wa.me/${room.whatsapp_number}" target="_blank" style="text-decoration:none; display:flex; flex:1;" onclick="event.stopPropagation()">
+          <button style="${btnBaseStyle} background:#25D366; color:white; width:100%;">
+            💬 WhatsApp
+          </button>
+        </a>
+      `;
+    }
+
+    // ALWAYS ADD CHAT BUTTON
+    actions += `
+      <button onclick="startChat(event, '${room.id}', '${room.user_id}')" 
+      style="${btnBaseStyle} background:#4F46E5; color:white;">
+      💬 Chat
+      </button>
+    `;
 
     container.innerHTML += `
       <div class="card" onclick="openRoom('${room.id}')">
@@ -400,6 +462,7 @@ function renderRooms(rooms) {
         </div>
         <div class="card-content">
           <div class="title">${room.title}</div>
+          <div class="owner-name">👤 ${room.users?.name || "User"}</div>
           
           <div class="details-row">
             <div class="detail-item">
@@ -411,7 +474,6 @@ function renderRooms(rooms) {
               <span>Dep: ₹ ${room.deposit}</span>
             </div>
             <div class="detail-item">
-              <span class="material-symbols-rounded">handshake</span>
               <span>${brokerageText}</span>
             </div>
           </div>
@@ -421,10 +483,9 @@ function renderRooms(rooms) {
             ${room.location}
           </div>
 
-          <button onclick="startChat(event, '${room.id}', '${room.user_id}')" 
-          style="margin-top:10px;padding:8px;border:none;background:#4F46E5;color:white;border-radius:8px;width:100%;font-weight:600;font-family:'Inter', sans-serif;cursor:pointer;">
-          💬 Chat
-          </button>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            ${actions}
+          </div>
         </div>
       </div>
     `;
@@ -497,7 +558,7 @@ function openChatList() {
 }
 
 /* =========================================
-   NEW NOTIFICATION LOGIC 
+   NEW NOTIFICATION LOGIC (AUTO-READ)
    ========================================= */
 
 /* OPEN NOTIFICATIONS */
@@ -518,7 +579,7 @@ function closeNotifications() {
   document.getElementById("notificationPanel").style.right = "-100%";
 }
 
-/* LOAD NOTIFICATIONS */
+/* LOAD NOTIFICATIONS (UPDATED TO AUTO MARK AS READ) */
 async function loadNotifications() {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return;
@@ -529,7 +590,16 @@ async function loadNotifications() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
+  if (!data) return;
+
   renderNotifications(data);
+
+  // AUTO MARK AS READ AFTER LOADING
+  await db
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("user_id", user.id)
+    .eq("is_read", false);
 }
 
 /* RENDER NOTIFICATIONS */
@@ -544,13 +614,11 @@ function renderNotifications(list) {
 
   list.forEach(n => {
     container.innerHTML += `
-      <div onclick="markAsRead('${n.id}')"
-      style="
+      <div style="
         padding:12px;
         border-bottom:1px solid #eee;
         font-weight:${n.is_read ? "normal" : "bold"};
         background:${n.is_read ? "#fff" : "#eef2ff"};
-        cursor:pointer;
       ">
         <div>${n.title}</div>
         <div style="font-size:12px;color:gray">${n.message}</div>
@@ -559,16 +627,6 @@ function renderNotifications(list) {
   });
 
   updateNotificationDot(list);
-}
-
-/* MARK AS READ */
-async function markAsRead(id) {
-  await db
-    .from("notifications")
-    .update({ is_read: true })
-    .eq("id", id);
-
-  loadNotifications();
 }
 
 /* RED DOT LOGIC */
@@ -596,15 +654,62 @@ function subscribeNotifications() {
     .subscribe();
 }
 
+/* =========================================
+   CHECK NEW MESSAGES (UNIQUE COUNT)
+   ========================================= */
+async function checkNewMessages() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  const { data } = await db
+    .from("messages")
+    .select("sender_id, room_id") // Fetches sender and room
+    .eq("receiver_id", user.id)
+    .eq("is_read", false);
+
+  if (!data) return;
+
+  // 🔥 UNIQUE CHAT COUNT (User + Property combination)
+  const uniqueChats = new Set(
+    data.map(m => m.sender_id + "_" + m.room_id)
+  );
+
+  const count = uniqueChats.size;
+
+  const badge = document.getElementById("msgBadge");
+
+  if (count > 0) {
+    badge.innerText = count;
+    badge.style.display = "block";
+  } else {
+    badge.style.display = "none";
+  }
+}
+
 /* INIT */
 loadRooms();
 
-// Also load notifications & real-time updates if user is already logged in
+// Check if user is logged in for alerts & periodic refreshes
 const initialUserCheck = JSON.parse(localStorage.getItem("user"));
 if (initialUserCheck) {
   loadNotifications();
+  checkNewMessages();
   subscribeNotifications();
 }
+
+/* =========================================
+   AUTO REFRESH INTERVAL
+   ========================================= */
+setInterval(() => {
+  // Only search if input is empty, otherwise we override the user's active search
+  const searchInput = document.getElementById("search").value;
+  if(!searchInput) {
+      loadRooms();
+  }
+  loadNotifications();
+  checkNewMessages();
+}, 5000); // every 5 sec
+
 </script>
 
 </body>
