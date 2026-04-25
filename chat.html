@@ -284,14 +284,18 @@ body {
 
 .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
 
-/* ACTIVE CHAT VIEW */
+/* ACTIVE CHAT VIEW & CUSTOM BACKGROUND */
 .chat-box-container {
   flex: 1;
   overflow-y: auto;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  background: #F1F5F9;
+  background-color: #F8FAFC;
+  /* Updated Background Styles Here */
+  background-image: url('https://i.ibb.co/JVxmx70/chatbg.png');
+  background-size: cover;
+  background-position: center;
 }
 
 .message {
@@ -303,7 +307,8 @@ body {
   line-height: 1.4;
   word-wrap: break-word;
   position: relative;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  /* Slightly stronger shadow so bubbles don't blend into the busy background pattern */
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08); 
   display: flex;
   flex-direction: column;
 }
@@ -405,7 +410,7 @@ body {
 
 /* BOTTOM NAV */
 .bottom-nav {
-  position: absolute; /* Using absolute inside relative container */
+  position: absolute; 
   bottom: 0;
   width: 100%;
   background: rgba(255, 255, 255, 0.9);
@@ -529,14 +534,11 @@ body {
 
 <script>
 // --- VIEWPORT / KEYBOARD FIX ---
-// Keeps the input box above the keyboard natively on mobile
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
     const container = document.getElementById('appContainer');
-    // Force container to match visible viewport height
     container.style.height = window.visualViewport.height + 'px';
     
-    // Auto-scroll to bottom of chat to ensure input is seen
     if (!document.getElementById("activeChatView").classList.contains("hidden")) {
       const chatView = document.getElementById("activeChatView");
       chatView.scrollTop = chatView.scrollHeight;
@@ -754,16 +756,13 @@ async function openChat(userId, roomToLoadId) {
     inactiveBanner.classList.remove("hidden");
   }
 
-  // Set up Supabase Realtime Broadcast for Live Typing
   if (chatChannel) db.removeChannel(chatChannel);
   
-  // Creates a unique channel string for this specific conversation
   const channelStr = `typing_room_${roomToLoadId}_${[currentUser.id, userId].sort().join('_')}`;
   chatChannel = db.channel(channelStr);
 
   chatChannel
     .on('broadcast', { event: 'typing' }, (payload) => {
-      // If the broadcast is from the other user, show/hide the typing dots
       if (payload.payload.user_id === userId) {
         isOtherUserTyping = payload.payload.is_typing;
         renderActiveChatUI(); 
@@ -797,7 +796,7 @@ msgInput.addEventListener('input', () => {
       event: 'typing',
       payload: { user_id: currentUser.id, is_typing: false }
     });
-  }, 1500); // Wait 1.5 seconds after last keystroke to clear
+  }, 1500); 
 });
 
 /* LOAD MESSAGES */
@@ -841,7 +840,6 @@ async function loadMessages(userId, roomToLoadId, forceScroll = true) {
 function renderActiveChatUI(forceScroll = false) {
   let finalHTML = cachedMessagesHTML;
 
-  // Append typing bubbles if the other user is typing
   if (isOtherUserTyping) {
     finalHTML += `
       <div class="message received" style="width: fit-content; padding: 14px 18px;">
@@ -873,7 +871,6 @@ async function sendMessage() {
   const text = msgInput.value.trim();
   if (!text) return;
 
-  // Stop typing indicator immediately on send
   isTyping = false;
   clearTimeout(typingTimeout);
   if (chatChannel) {
@@ -906,7 +903,6 @@ async function sendMessage() {
 
   loadMessages(chatUserId, roomId, true);
   
-  // Return focus to input on desktop, keep keyboard open on mobile
   msgInput.focus();
 }
 
@@ -925,7 +921,7 @@ function openRoom(id) {
 
 function goBack() {
   clearInterval(chatInterval);
-  if (chatChannel) db.removeChannel(chatChannel); // Clean up realtime connection
+  if (chatChannel) db.removeChannel(chatChannel); 
   
   const source = params.get("source");
   const roomIdStr = params.get("room");
