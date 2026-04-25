@@ -32,7 +32,7 @@
 html, body {
   height: 100%;
   width: 100%;
-  overflow: hidden; /* Prevents whole-page bouncing on mobile */
+  overflow: hidden; 
 }
 
 body {
@@ -284,7 +284,7 @@ body {
 
 .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
 
-/* ACTIVE CHAT VIEW & CUSTOM BACKGROUND */
+/* ACTIVE CHAT VIEW & FADED BACKGROUND */
 .chat-box-container {
   flex: 1;
   overflow-y: auto;
@@ -292,8 +292,9 @@ body {
   display: flex;
   flex-direction: column;
   background-color: #F8FAFC;
-  /* Updated Background Styles Here */
-  background-image: url('https://i.ibb.co/JVxmx70/chatbg.png');
+  /* Added a linear-gradient overlay to fade the background image. 
+     You can change the 0.85 to 0.7 for less fade, or 0.95 for more fade. */
+  background-image: linear-gradient(rgba(248, 250, 252, 0.85), rgba(248, 250, 252, 0.85)), url('https://i.ibb.co/JVxmx70/chatbg.png');
   background-size: cover;
   background-position: center;
 }
@@ -307,7 +308,6 @@ body {
   line-height: 1.4;
   word-wrap: break-word;
   position: relative;
-  /* Slightly stronger shadow so bubbles don't blend into the busy background pattern */
   box-shadow: 0 3px 8px rgba(0,0,0,0.08); 
   display: flex;
   flex-direction: column;
