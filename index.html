@@ -35,7 +35,7 @@ OneSignalDeferred.push(async function(OneSignal) {
   --text-main: #0F172A;
   --text-muted: #64748B;
   --border: #E2E8F0;
-  --radius: 20px; /* Slightly reduced for better mobile edge fitting */
+  --radius: 20px; 
   --safe-bottom: 90px;
 }
 
@@ -54,7 +54,7 @@ body {
   overflow: hidden; 
 }
 
-/* MOBILE APP WRAPPER - Updated to auto-fit full screen cleanly */
+/* MOBILE APP WRAPPER */
 .app-container {
   width: 100%;
   max-width: 100%;
@@ -68,26 +68,23 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* HEADER - Added top padding to act as a safe area / banner spacer */
+/* HEADER - Updated to solid primary color */
 .header {
   display: flex;
   align-items: center;
-  /* Top padding increased to 45px to push search below the status bar */
   padding: 45px 20px 16px 20px;
-  background: rgba(248, 250, 252, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--primary-gradient); /* Added color behind header */
   position: sticky;
   top: 0;
   z-index: 1000;
-  border-bottom: 1px solid rgba(0,0,0,0.03);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
 }
 
 .logo {
   width: 42px;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
 .search-box {
@@ -101,22 +98,21 @@ body {
   padding: 12px 16px 12px 44px;
   border-radius: 99px;
   border: 1px solid transparent;
-  background: #F1F5F9;
+  background: rgba(255, 255, 255, 0.15); /* Translucent white */
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  color: var(--text-main);
+  color: #FFFFFF; /* White text */
   outline: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-box input::placeholder {
-  color: #94A3B8;
+  color: rgba(255, 255, 255, 0.7); /* Lighter white placeholder */
 }
 
 .search-box input:focus {
-  border-color: #A5B4FC;
-  background: var(--surface);
-  box-shadow: 0 0 0 4px var(--primary-light);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
 }
 
 .search-box .material-symbols-rounded {
@@ -124,14 +120,9 @@ body {
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #94A3B8;
+  color: #FFFFFF; /* White search icon */
   font-size: 20px;
   transition: color 0.3s;
-}
-
-.search-box input:focus + .material-symbols-rounded,
-.search-box:focus-within .material-symbols-rounded {
-  color: var(--primary);
 }
 
 .notification {
@@ -140,8 +131,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-main);
-  background: #F1F5F9;
+  color: #FFFFFF; /* White icon */
+  background: rgba(255, 255, 255, 0.15); /* Translucent white background */
   width: 42px;
   height: 42px;
   border-radius: 50%;
@@ -149,7 +140,7 @@ body {
 }
 
 .notification:active {
-  background: #E2E8F0;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .notification .badge {
@@ -160,13 +151,13 @@ body {
   height: 8px;
   background: #EF4444;
   border-radius: 50%;
-  box-shadow: 0 0 0 2px #F1F5F9;
+  box-shadow: 0 0 0 2px var(--primary); /* Matched border to background */
   display: none;
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
   70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
   100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
@@ -350,7 +341,7 @@ body {
   color: var(--text-muted);
 }
 
-/* BOTTOM NAV - Updated width */
+/* BOTTOM NAV */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -882,7 +873,7 @@ setInterval(() => {
   // Only search if input is empty, otherwise we override the user's active search
   const searchInput = document.getElementById("search").value;
   if(!searchInput) {
-    loadRooms(); // <-- Typo 'I    loadRooms();' was fixed here
+    loadRooms();
   }
   loadNotifications();
   checkNewMessages();
