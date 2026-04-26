@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -292,8 +292,6 @@ body {
   display: flex;
   flex-direction: column;
   background-color: #F8FAFC;
-  /* Added a linear-gradient overlay to fade the background image. 
-     You can change the 0.85 to 0.7 for less fade, or 0.95 for more fade. */
   background-image: linear-gradient(rgba(248, 250, 252, 0.85), rgba(248, 250, 252, 0.85)), url('https://i.ibb.co/JVxmx70/chatbg.png');
   background-size: cover;
   background-position: center;
@@ -605,8 +603,22 @@ function formatTimeShort(dateStr) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-/* LOAD CHAT LIST */
+/* LOAD CHAT LIST (With LocalStorage Caching) */
 async function loadChats() {
+  const cacheKey = `tingo_chats_${currentUser.id}`;
+
+  // 1. Check LocalStorage and render instantly if data exists
+  const cachedChats = localStorage.getItem(cacheKey);
+  if (cachedChats) {
+    try {
+      allChats = JSON.parse(cachedChats);
+      renderChats(allChats);
+    } catch (e) {
+      console.error("Error parsing cached chats", e);
+    }
+  }
+
+  // 2. Fetch fresh data from Supabase in the background
   const { data, error } = await db
     .from("messages")
     .select("*")
@@ -614,11 +626,14 @@ async function loadChats() {
     .order("created_at", { ascending: false });
 
   if (error || !data || data.length === 0) {
-    chatListView.innerHTML = `
-      <div class="empty-state">
-        <span class="material-symbols-rounded" style="font-size: 48px; color: #D1D5DB; margin-bottom: 10px; display: block;">forum</span>
-        <p>No messages yet.</p>
-      </div>`;
+    // Only show empty state if we also have nothing in cache
+    if (!cachedChats) {
+      chatListView.innerHTML = `
+        <div class="empty-state">
+          <span class="material-symbols-rounded" style="font-size: 48px; color: #D1D5DB; margin-bottom: 10px; display: block;">forum</span>
+          <p>No messages yet.</p>
+        </div>`;
+    }
     return;
   }
 
@@ -666,6 +681,9 @@ async function loadChats() {
 
   allChats = Object.values(map);
   allChats.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  
+  // 3. Save the fresh data to cache and update the UI
+  localStorage.setItem(cacheKey, JSON.stringify(allChats));
   renderChats(allChats);
 }
 
@@ -799,8 +817,20 @@ msgInput.addEventListener('input', () => {
   }, 1500); 
 });
 
-/* LOAD MESSAGES */
+/* LOAD MESSAGES (With LocalStorage Caching) */
 async function loadMessages(userId, roomToLoadId, forceScroll = true) {
+  const cacheKey = `tingo_msgs_${roomToLoadId}_${userId}_${currentUser.id}`;
+
+  // 1. Load from cache for instant UI (only on initial open, not on interval ticks)
+  if (forceScroll) { 
+    const cachedHTML = localStorage.getItem(cacheKey);
+    if (cachedHTML) {
+      cachedMessagesHTML = cachedHTML;
+      renderActiveChatUI(true);
+    }
+  }
+
+  // 2. Fetch fresh data
   const { data } = await db
     .from("messages")
     .select("*")
@@ -833,6 +863,10 @@ async function loadMessages(userId, roomToLoadId, forceScroll = true) {
   });
 
   cachedMessagesHTML = htmlString;
+  
+  // 3. Save the rendered HTML to cache
+  localStorage.setItem(cacheKey, htmlString);
+  
   renderActiveChatUI(forceScroll);
 }
 
