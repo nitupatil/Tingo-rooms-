@@ -504,6 +504,14 @@ button:active {
         <strong>Active session:</strong> This device is your latest login device.
       </div>
       
+      <div class="session-note" id="pushNote">
+        <strong>Push notifications:</strong> Checking...
+      </div>
+
+      <button onclick="enablePushForCurrentUser()">
+        Enable / Sync Push Notifications
+      </button>
+
       <button class="logout-btn" onclick="logout()">
         <span class="material-symbols-rounded" style="font-size: 20px;">logout</span>
         Logout
@@ -695,53 +703,207 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function getLatestOneSignalSubscriptionId(user) {
+function updatePushNote(info = {}) {
+  const note = document.getElementById("pushNote");
+  if (!note) return;
+
+  const permission = info.permission === true ? "Allowed" : info.permission === false ? "Not allowed" : "Checking...";
+  const subscriptionId = info.subscription_id || info.subscriptionId || "";
+  const oneSignalId = info.onesignal_id || info.oneSignalId || "";
+
+  note.innerHTML = `
+    <strong>Push notifications:</strong> ${permission}<br>
+    <span>Subscription ID: ${subscriptionId ? subscriptionId : "Not saved yet"}</span>
+    ${oneSignalId ? `<br><span>OneSignal User ID: ${oneSignalId}</span>` : ""}
+  `;
+}
+
+/*
+  Runs OneSignal code only after SDK is ready.
+  This avoids timing issues where PushSubscription.id returns null too early.
+*/
+function runOneSignalReady(task, timeoutMs = 12000) {
   return new Promise((resolve) => {
     let resolved = false;
+
     const finish = (value) => {
       if (resolved) return;
       resolved = true;
       resolve(value || null);
     };
 
-    const OneSignalQueue = window.OneSignalDeferred || window.OneSignal || [];
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
 
     try {
-      OneSignalQueue.push(async function(OneSignal) {
+      window.OneSignalDeferred.push(async function(OneSignal) {
         try {
-          if (OneSignal.User && typeof OneSignal.User.login === "function") {
-            await OneSignal.User.login(String(user.id));
-          }
-
-          for (let i = 0; i < 14; i++) {
-            const subId = OneSignal.User && OneSignal.User.PushSubscription
-              ? OneSignal.User.PushSubscription.id
-              : null;
-
-            if (subId) {
-              finish(subId);
-              return;
-            }
-            await delay(250);
-          }
+          const result = await task(OneSignal);
+          finish(result);
         } catch (err) {
-          console.error("OneSignal registration error:", err);
+          console.error("OneSignal task error:", err);
+          finish(null);
         }
-        finish(null);
       });
     } catch (err) {
       console.error("OneSignal queue error:", err);
       finish(null);
     }
 
-    setTimeout(() => finish(null), 4500);
+    setTimeout(() => finish(null), timeoutMs);
   });
+}
+
+function readOneSignalInfo(OneSignal) {
+  const push = OneSignal.User && OneSignal.User.PushSubscription ? OneSignal.User.PushSubscription : null;
+
+  return {
+    subscription_id: push ? (push.id || null) : null,
+    onesignal_id: OneSignal.User ? (OneSignal.User.onesignalId || OneSignal.User.onesignal_id || null) : null,
+    permission: OneSignal.Notifications ? OneSignal.Notifications.permission : null,
+    opted_in: push ? (push.optedIn ?? null) : null
+  };
+}
+
+async function savePushSubscriptionForUser(user, info) {
+  if (!user || !user.id || !info || !info.subscription_id) return false;
+
+  const now = new Date().toISOString();
+
+  const { error } = await db
+    .from("user_push_subscriptions")
+    .upsert({
+      user_id: user.id,
+      subscription_id: info.subscription_id,
+      onesignal_id: info.onesignal_id || null,
+      external_id: String(user.id),
+      browser_info: navigator.userAgent,
+      is_active: true,
+      last_seen_at: now,
+      updated_at: now
+    }, {
+      onConflict: "subscription_id"
+    });
+
+  if (error) {
+    console.warn("Could not save user_push_subscriptions row:", error);
+    return false;
+  }
+
+  return true;
+}
+
+async function syncOneSignalForUser(user, options = {}) {
+  if (!user || !user.id) return null;
+
+  updatePushNote({});
+
+  const requestPermission = options.requestPermission !== false;
+
+  const info = await runOneSignalReady(async function(OneSignal) {
+    /*
+      Important for your SQL push:
+      OneSignal external_id must equal Supabase users.id.
+      Correct v16 method is OneSignal.login(user.id).
+    */
+    if (typeof OneSignal.login === "function") {
+      await OneSignal.login(String(user.id));
+    } else if (OneSignal.User && typeof OneSignal.User.login === "function") {
+      await OneSignal.User.login(String(user.id));
+    }
+
+    const supported = OneSignal.Notifications && typeof OneSignal.Notifications.isPushSupported === "function"
+      ? OneSignal.Notifications.isPushSupported()
+      : true;
+
+    if (!supported) {
+      return {
+        subscription_id: null,
+        onesignal_id: OneSignal.User ? (OneSignal.User.onesignalId || null) : null,
+        permission: false,
+        opted_in: false,
+        unsupported: true
+      };
+    }
+
+    if (requestPermission && OneSignal.Notifications) {
+      try {
+        if (!OneSignal.Notifications.permission && typeof OneSignal.Notifications.requestPermission === "function") {
+          await OneSignal.Notifications.requestPermission();
+        }
+      } catch (permissionErr) {
+        console.warn("OneSignal permission request skipped/blocked:", permissionErr);
+      }
+    }
+
+    if (OneSignal.User && OneSignal.User.PushSubscription && typeof OneSignal.User.PushSubscription.optIn === "function") {
+      try {
+        await OneSignal.User.PushSubscription.optIn();
+      } catch (optErr) {
+        console.warn("OneSignal optIn skipped:", optErr);
+      }
+    }
+
+    let latest = readOneSignalInfo(OneSignal);
+
+    for (let i = 0; i < 24; i++) {
+      latest = readOneSignalInfo(OneSignal);
+      if (latest.subscription_id) break;
+      await delay(500);
+    }
+
+    /* Save again if the browser subscription changes later */
+    if (OneSignal.User && OneSignal.User.PushSubscription && typeof OneSignal.User.PushSubscription.addEventListener === "function") {
+      try {
+        OneSignal.User.PushSubscription.addEventListener("change", async function() {
+          const changedInfo = readOneSignalInfo(OneSignal);
+          await savePushSubscriptionForUser(user, changedInfo);
+
+          if (changedInfo.subscription_id) {
+            await db.from("users")
+              .update({ onesignal_id: changedInfo.subscription_id })
+              .eq("id", user.id);
+          }
+
+          updatePushNote(changedInfo);
+        });
+      } catch (eventErr) {
+        console.warn("OneSignal change listener not attached:", eventErr);
+      }
+    }
+
+    return latest;
+  });
+
+  if (info) {
+    await savePushSubscriptionForUser(user, info);
+
+    if (info.subscription_id) {
+      await db.from("users")
+        .update({ onesignal_id: info.subscription_id })
+        .eq("id", user.id);
+
+      const localUser = getStoredUser();
+      if (localUser && localUser.id === user.id) {
+        storeUser({ ...localUser, onesignal_id: info.subscription_id });
+      }
+    }
+
+    updatePushNote(info);
+  }
+
+  return info;
+}
+
+/* Backward-compatible alias for old code name */
+async function getLatestOneSignalSubscriptionId(user) {
+  const info = await syncOneSignalForUser(user);
+  return info && info.subscription_id ? info.subscription_id : null;
 }
 
 async function createLatestLoginSession(user) {
   const sessionToken = generateSessionToken();
   const deviceName = getDeviceName();
-  const oneSignalId = await getLatestOneSignalSubscriptionId(user);
+  const pushInfo = await syncOneSignalForUser(user);
 
   const payload = {
     active_session_token: sessionToken,
@@ -749,8 +911,8 @@ async function createLatestLoginSession(user) {
     last_login_at: getCurrentDbTimestamp()
   };
 
-  if (oneSignalId) {
-    payload.onesignal_id = oneSignalId;
+  if (pushInfo && pushInfo.subscription_id) {
+    payload.onesignal_id = pushInfo.subscription_id;
   }
 
   const { data, error } = await db
@@ -771,14 +933,47 @@ async function createLatestLoginSession(user) {
   return updatedUser;
 }
 
+async function enablePushForCurrentUser() {
+  const user = getStoredUser();
+
+  if (!user || !user.id) {
+    alert("Please login first.");
+    return;
+  }
+
+  const info = await syncOneSignalForUser(user, { requestPermission: true });
+
+  if (info && info.subscription_id) {
+    alert("Push notification device saved successfully.");
+  } else {
+    alert("Push notification subscription is not ready. Please allow browser notifications and make sure this page is opened from your HTTPS website, not file://.");
+  }
+}
+
+async function logoutOneSignal() {
+  await runOneSignalReady(async function(OneSignal) {
+    if (typeof OneSignal.logout === "function") {
+      await OneSignal.logout();
+    }
+    return true;
+  }, 4000);
+}
+
 /* ---------------- INIT ---------------- */
 window.onload = async () => {
   const user = getStoredUser();
   if (user) {
-    await validateCurrentSession({ silent: false });
-    sessionCheckInterval = setInterval(() => {
-      validateCurrentSession({ silent: true });
-    }, 15000);
+    const valid = await validateCurrentSession({ silent: false });
+
+    if (valid) {
+      const latestUser = getStoredUser() || user;
+      /* Keep OneSignal external_id + browser subscription fresh on every profile visit */
+      syncOneSignalForUser(latestUser, { requestPermission: false });
+
+      sessionCheckInterval = setInterval(() => {
+        validateCurrentSession({ silent: true });
+      }, 15000);
+    }
   }
 };
 
@@ -1105,6 +1300,11 @@ function showProfile(user) {
     const time = user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "now";
     sessionNote.innerHTML = `<strong>Active session:</strong> ${device}<br><span>Latest login: ${time}</span>`;
   }
+
+  updatePushNote({
+    subscription_id: user.onesignal_id || "",
+    permission: null
+  });
 }
 
 /* ---------------- LOGOUT ---------------- */
@@ -1120,6 +1320,12 @@ async function logout() {
     } catch (err) {
       console.warn("Logout session cleanup error:", err);
     }
+  }
+
+  try {
+    await logoutOneSignal();
+  } catch (err) {
+    console.warn("OneSignal logout cleanup error:", err);
   }
 
   localStorage.removeItem("user");
