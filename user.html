@@ -577,6 +577,26 @@ function generateSessionToken() {
   return Date.now().toString(36) + "_" + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
 
+function toDbTimestamp(date) {
+  const pad = n => String(n).padStart(2, "0");
+  return (
+    date.getFullYear() + "-" +
+    pad(date.getMonth() + 1) + "-" +
+    pad(date.getDate()) + " " +
+    pad(date.getHours()) + ":" +
+    pad(date.getMinutes()) + ":" +
+    pad(date.getSeconds())
+  );
+}
+
+function getOtpExpiryTimestamp() {
+  return toDbTimestamp(new Date(Date.now() + 5 * 60000));
+}
+
+function getCurrentDbTimestamp() {
+  return toDbTimestamp(new Date());
+}
+
 function getDeviceName() {
   const ua = navigator.userAgent || "";
   let browser = "Browser";
@@ -726,7 +746,7 @@ async function createLatestLoginSession(user) {
   const payload = {
     active_session_token: sessionToken,
     active_device_name: deviceName,
-    last_login_at: new Date().toISOString()
+    last_login_at: getCurrentDbTimestamp()
   };
 
   if (oneSignalId) {
@@ -834,9 +854,10 @@ async function signup() {
     .eq("email", email);
 
   const otp = Math.floor(100000 + Math.random() * 900000);
-  const expiry = new Date(Date.now() + 5 * 60000).toISOString();
+  const expiry = getOtpExpiryTimestamp();
 
   currentEmail = email;
+  sessionStorage.setItem("pending_otp_email", email);
 
   if (existing && existing.length > 0) {
     const user = existing[0];
@@ -877,10 +898,11 @@ async function signup() {
 
 /* ---------------- RESEND OTP ---------------- */
 async function resendOTP() {
+  if (!currentEmail) currentEmail = sessionStorage.getItem("pending_otp_email") || "";
   if (!currentEmail) return;
 
   const otp = Math.floor(100000 + Math.random() * 900000);
-  const expiry = new Date(Date.now() + 5 * 60000).toISOString();
+  const expiry = getOtpExpiryTimestamp();
 
   await db.from("users")
     .update({ otp: otp.toString(), otp_expiry: expiry })
@@ -892,32 +914,116 @@ async function resendOTP() {
 }
 
 /* ---------------- VERIFY OTP ---------------- */
-async function verifyOTP() {
-  const otp = document.getElementById("otpInput").value;
+function parseOtpExpiry(value) {
+  if (!value) return null;
+  const text = String(value).trim();
 
-  const { data } = await db
+  // Supabase may return timestamp without timezone as either
+  // "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DDTHH:mm:ss".
+  // This parser keeps it as local time to match the way we save it.
+  const normalized = text.replace("T", " ").split(".")[0];
+  const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/);
+
+  if (match) {
+    const [, y, m, d, h, min, sec] = match.map(Number);
+    return new Date(y, m - 1, d, h, min, sec);
+  }
+
+  const fallback = new Date(text);
+  return Number.isNaN(fallback.getTime()) ? null : fallback;
+}
+
+function normalizeOtpValue(value) {
+  return String(value || "")
+    .replace(/\s+/g, "")
+    .replace(/[^0-9]/g, "")
+    .trim();
+}
+
+async function verifyOTP() {
+  const enteredOtp = normalizeOtpValue(document.getElementById("otpInput").value);
+  const emailForOtp = String(currentEmail || sessionStorage.getItem("pending_otp_email") || "").trim().toLowerCase();
+
+  if (!emailForOtp) {
+    alert("Email session missing. Please sign up again.");
+    showSignup();
+    return;
+  }
+
+  if (!enteredOtp) {
+    alert("Please enter OTP.");
+    return;
+  }
+
+  // More reliable flow:
+  // 1. Fetch row by email only
+  // 2. Compare OTP in JavaScript after normalizing
+  // This avoids false Invalid OTP caused by text/number formatting or Supabase .eq() mismatch.
+  const { data, error } = await db
     .from("users")
     .select("*")
-    .eq("email", currentEmail)
-    .eq("otp", otp)
-    .gt("otp_expiry", new Date().toISOString());
+    .eq("email", emailForOtp)
+    .limit(1);
+
+  if (error) {
+    console.error("OTP verification fetch error:", error);
+    alert("OTP verification error. Please try again.");
+    return;
+  }
 
   if (!data || data.length === 0) {
-    alert("Invalid or expired OTP");
+    console.warn("No user found for OTP email:", emailForOtp);
+    alert("Account not found for this email. Please sign up again.");
+    showSignup();
     return;
   }
 
   const user = data[0];
+  const storedOtp = normalizeOtpValue(user.otp);
 
-  await db.from("users")
-    .update({ is_verified: true, otp: null })
-    .eq("email", currentEmail);
+  console.log("OTP Debug", {
+    email: emailForOtp,
+    enteredOtp,
+    storedOtp,
+    otpExpiry: user.otp_expiry,
+    isVerified: user.is_verified
+  });
+
+  if (!storedOtp) {
+    alert("No active OTP found. Please resend OTP.");
+    return;
+  }
+
+  if (storedOtp !== enteredOtp) {
+    alert("Invalid OTP. Please enter the latest OTP sent to your email.");
+    return;
+  }
+
+  const expiryDate = parseOtpExpiry(user.otp_expiry);
+
+  if (expiryDate && Date.now() > expiryDate.getTime()) {
+    alert("OTP expired. Please resend OTP.");
+    return;
+  }
+
+  const { error: updateError } = await db.from("users")
+    .update({ is_verified: true, otp: null, otp_expiry: null })
+    .eq("id", user.id);
+
+  if (updateError) {
+    console.error("OTP completion update error:", updateError);
+    alert("Could not complete verification. Please try again.");
+    return;
+  }
 
   user.is_verified = true;
+  user.otp = null;
+  user.otp_expiry = null;
 
   const finalUser = await createLatestLoginSession(user);
   if (!finalUser) return;
 
+  sessionStorage.removeItem("pending_otp_email");
   alert("Account created & logged in!");
   handleRedirect();
 }
