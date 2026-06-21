@@ -1109,6 +1109,421 @@ button {
   }
 }
 
+
+
+/* UPDATED: sticky type filter + Available/Needed switch + complete image fit */
+.card-img-wrapper {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(14, 165, 233, 0.08)), #F8FAFC;
+}
+
+.card-img-wrapper img,
+.card-img-wrapper img.slide {
+  object-fit: contain !important;
+  background: #F8FAFC;
+}
+
+.filter-bar {
+  align-items: center;
+}
+
+.filter-select {
+  min-width: 128px;
+}
+
+.mode-switch-wrap {
+  position: sticky;
+  top: 118px;
+  z-index: 945;
+  width: 100%;
+  padding: 0 12px 10px;
+  background: rgba(248, 250, 252, 0.80);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: padding 0.24s ease, background 0.24s ease, transform 0.24s ease, opacity 0.24s ease;
+}
+
+.mode-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+}
+
+.mode-btn {
+  min-width: 0;
+  min-height: 38px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.22s ease, opacity 0.22s ease, color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+}
+
+.mode-btn .material-symbols-rounded {
+  font-size: 18px;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+.mode-btn:active { transform: scale(0.96); }
+
+.mode-btn.active {
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  box-shadow: 0 8px 16px var(--primary-glow);
+}
+
+.mode-switch-wrap.compact {
+  position: fixed;
+  top: 118px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+}
+
+.mode-switch-wrap.compact .mode-switch {
+  display: contents;
+}
+
+.mode-switch-wrap.compact .mode-btn {
+  position: fixed;
+  top: 118px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--primary);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.mode-switch-wrap.compact .mode-btn.active {
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+}
+
+.mode-switch-wrap.compact .mode-label {
+  opacity: 0;
+  width: 0;
+  max-width: 0;
+  overflow: hidden;
+}
+
+.mode-switch-wrap.compact .mode-btn .material-symbols-rounded {
+  font-size: 22px;
+}
+
+.mode-switch-wrap.compact #modeAvailableBtn {
+  left: 12px;
+  transform: translateX(-2px) scale(0.96);
+}
+
+.mode-switch-wrap.compact #modeNeededBtn {
+  right: 12px;
+  transform: translateX(2px) scale(0.96);
+}
+
+.requirement-card {
+  position: relative;
+  border: 1px solid rgba(165, 180, 252, 0.60);
+  background: radial-gradient(circle at 18% 0%, rgba(79, 70, 229, 0.13), transparent 34%), radial-gradient(circle at 92% 18%, rgba(249, 115, 22, 0.12), transparent 30%), rgba(255, 255, 255, 0.96);
+}
+
+.requirement-hero {
+  position: relative;
+  min-height: 118px;
+  padding: 14px;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(6, 182, 212, 0.10));
+}
+
+.requirement-hero::after {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: -24px;
+  width: 120px;
+  height: 120px;
+  border-radius: 38% 62% 48% 52%;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.34), rgba(236, 72, 153, 0.18));
+}
+
+.requirement-vector {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  width: 58px;
+  height: 58px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  background: var(--primary-gradient);
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.25);
+  z-index: 1;
+}
+
+.requirement-vector .material-symbols-rounded {
+  font-size: 34px;
+}
+
+.requirement-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #7C2D12;
+  background: #FFEDD5;
+  font-size: 11px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.requirement-card .title {
+  padding-right: 78px;
+}
+
+.requirement-desc {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .filter-bar {
+    position: sticky;
+    top: 83px;
+    z-index: 960;
+  }
+
+  .mode-switch-wrap {
+    position: sticky;
+    top: 143px;
+    z-index: 955;
+    padding: 0 40px 12px;
+  }
+
+  .mode-switch {
+    max-width: 560px;
+  }
+
+  .mode-switch-wrap.compact {
+    position: fixed;
+    top: 145px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 0;
+  }
+
+  .mode-switch-wrap.compact .mode-btn {
+    top: 145px;
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+  }
+
+  .mode-switch-wrap.compact #modeAvailableBtn { left: 40px; }
+  .mode-switch-wrap.compact #modeNeededBtn { right: 150px; }
+
+  .panel-open .mode-switch-wrap:not(.compact) {
+    margin-right: 30%;
+    width: 70%;
+  }
+
+  .nav-left .mode-switch-wrap:not(.compact) {
+    margin-right: 120px;
+    width: calc(100% - 120px);
+  }
+
+  .panel-open.nav-left .mode-switch-wrap:not(.compact) {
+    margin-right: 0;
+    margin-left: 30%;
+    width: 70%;
+  }
+
+  .nav-left .mode-switch-wrap.compact #modeNeededBtn { right: 150px; }
+  .panel-open .mode-switch-wrap.compact #modeNeededBtn { right: calc(30% + 24px); }
+  .panel-open.nav-left .mode-switch-wrap.compact #modeAvailableBtn { left: calc(30% + 24px); }
+}
+
+@media (max-width: 430px) {
+  .mode-switch-wrap.compact .mode-btn {
+    width: 42px;
+    height: 42px;
+    min-height: 42px;
+  }
+}
+
+
+
+/* MOBILE COMPACT FIX: when scrolling down, hide the whole Available/Needed switch.
+   It will fully reappear on a small upward swipe via JS removing .compact. */
+@media (max-width: 899px) {
+  .mode-switch-wrap.compact {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-16px) scale(0.98) !important;
+    pointer-events: none !important;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease !important;
+  }
+
+  .mode-switch-wrap.compact .mode-switch {
+    display: grid !important;
+    pointer-events: none !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn,
+  .mode-switch-wrap.compact #modeAvailableBtn,
+  .mode-switch-wrap.compact #modeNeededBtn {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform: translateY(-12px) scale(0.92) !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn .material-symbols-rounded,
+  .mode-switch-wrap.compact .mode-label {
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+}
+
+
+/* FINAL DESKTOP STICKY UPDATE: keep full search/filter/mode switch visible on wide screens */
+@media (min-width: 900px) {
+  .header,
+  .filter-bar,
+  .mode-switch-wrap {
+    position: sticky !important;
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+
+  .header { top: 0 !important; z-index: 1200 !important; }
+  .filter-bar { top: 83px !important; z-index: 1190 !important; }
+
+  .mode-switch-wrap,
+  .mode-switch-wrap.compact {
+    top: 143px !important;
+    z-index: 1180 !important;
+    width: 100% !important;
+    padding: 0 40px 12px !important;
+    background: rgba(248, 250, 252, 0.88) !important;
+    pointer-events: auto !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .mode-switch-wrap.compact .mode-switch {
+    display: grid !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: 38px !important;
+    padding: 0 16px !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    transform: none !important;
+    pointer-events: auto !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn.active {
+    box-shadow: 0 8px 16px var(--primary-glow) !important;
+  }
+
+  .mode-switch-wrap.compact .mode-label {
+    opacity: 1 !important;
+    width: auto !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+
+  .mode-switch-wrap.compact .mode-btn .material-symbols-rounded {
+    font-size: 18px !important;
+  }
+
+  .mode-switch-wrap.compact #modeAvailableBtn,
+  .mode-switch-wrap.compact #modeNeededBtn {
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+
+  .panel-open .mode-switch-wrap,
+  .panel-open .mode-switch-wrap.compact {
+    margin-right: 30% !important;
+    width: 70% !important;
+  }
+
+  .nav-left .mode-switch-wrap,
+  .nav-left .mode-switch-wrap.compact {
+    margin-right: 120px !important;
+    width: calc(100% - 120px) !important;
+  }
+
+  .panel-open.nav-left .mode-switch-wrap,
+  .panel-open.nav-left .mode-switch-wrap.compact {
+    margin-right: 0 !important;
+    margin-left: 30% !important;
+    width: 70% !important;
+  }
+}
+
+
+/* FILTER ACTIVE STATE UPDATE */
+.filter-select.filter-active {
+  color: #047857 !important;
+  background: #ECFDF5 !important;
+  border-color: rgba(16, 185, 129, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.10), 0 8px 16px rgba(15, 23, 42, 0.04) !important;
+}
+
+.filter-reset {
+  display: none !important;
+}
+
+.filter-reset.visible {
+  display: inline-flex !important;
+}
+
 </style>
 </head>
 
@@ -1142,6 +1557,19 @@ button {
       <span class="material-symbols-rounded">close</span>
       Clear
     </button>
+  </div>
+
+  <div class="mode-switch-wrap" id="modeSwitchWrap" aria-label="Switch post category">
+    <div class="mode-switch">
+      <button type="button" class="mode-btn active" id="modeAvailableBtn" onclick="setPostMode('available')">
+        <span class="material-symbols-rounded">home_work</span>
+        <span class="mode-label">Rooms Available</span>
+      </button>
+      <button type="button" class="mode-btn" id="modeNeededBtn" onclick="setPostMode('needed')">
+        <span class="material-symbols-rounded">person_search</span>
+        <span class="mode-label">Rooms Needed</span>
+      </button>
+    </div>
   </div>
 
 
@@ -1224,6 +1652,9 @@ let selectedSearchPlace = null;
 let suggestionRequestId = 0;
 let searchTimeout;
 let suggestionTimeout;
+let activePostMode = "available";
+let modeSwitchLastScroll = 0;
+let modeSwitchExpandedUntil = 0;
 
 function getCurrentSearchText() {
   const input = document.getElementById("search");
@@ -2150,9 +2581,455 @@ async function syncOneSignalId(user) {
   });
 }
 
+
+
+/* UPDATED HOME FEED: dynamic type + brokerage filters, Available/Needed mode, and improved sticky switch */
+function getActiveFilters() {
+  const type = document.getElementById("filterType")?.value || "";
+  const brokerage = document.getElementById("filterBrokerage")?.value || "";
+  return { type, brokerage };
+}
+
+function hasActiveFilters() {
+  const filters = getActiveFilters();
+  return Boolean(filters.type || filters.brokerage);
+}
+
+function updateFilterUI() {
+  const filters = getActiveFilters();
+  const typeFilter = document.getElementById("filterType");
+  const brokerageFilter = document.getElementById("filterBrokerage");
+  const clearBtn = document.getElementById("clearFilters");
+
+  typeFilter?.classList.toggle("filter-active", Boolean(filters.type));
+  brokerageFilter?.classList.toggle("filter-active", Boolean(filters.brokerage));
+  clearBtn?.classList.toggle("visible", hasActiveFilters());
+}
+
+function applyFiltersToQuery(query) {
+  const filters = getActiveFilters();
+
+  if (filters.type) {
+    query = query.ilike("type", `%${filters.type}%`);
+  }
+
+  // Brokerage exists only on room_posts, so apply it only for Rooms Available.
+  if (activePostMode === "available" && filters.brokerage) {
+    if (filters.brokerage === "No Brokerage") {
+      query = query.or("brokerage_type.ilike.%No Brokerage%,brokerage_type.is.null");
+    } else {
+      query = query.ilike("brokerage_type", `%${filters.brokerage}%`);
+    }
+  }
+
+  return query;
+}
+
+function roomMatchesActiveFilters(room) {
+  const filters = getActiveFilters();
+  if (filters.type && !includesText(room.type, filters.type)) return false;
+
+  if (activePostMode === "available" && filters.brokerage) {
+    const roomBrokerage = room.brokerage_type || "No Brokerage";
+    if (!includesText(roomBrokerage, filters.brokerage)) return false;
+  }
+
+  return true;
+}
+
+async function loadFilterOptions() {
+  const [postsResult, requirementsResult] = await Promise.all([
+    db.from("room_posts").select("type, brokerage_type").limit(1000),
+    db.from("room_requirements").select("type").limit(1000)
+  ]);
+
+  if (postsResult.error) console.warn("Room post filter option loading error", postsResult.error);
+  if (requirementsResult.error) console.warn("Requirement filter option loading error", requirementsResult.error);
+
+  const allTypes = [
+    ...(postsResult.data || []).map(row => row.type),
+    ...(requirementsResult.data || []).map(row => row.type)
+  ];
+
+  const brokerageValues = (postsResult.data || [])
+    .map(row => row.brokerage_type || "No Brokerage")
+    .filter(Boolean);
+
+  fillSelectOptions("filterType", allTypes, "All types");
+  fillSelectOptions("filterBrokerage", brokerageValues, "All brokerage");
+  updateFilterUI();
+}
+
+function bindFilterEvents() {
+  ["filterType", "filterBrokerage"].forEach(id => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.addEventListener("change", () => {
+      selectedSearchPlace = null;
+      hideSuggestionBox();
+      updateFilterUI();
+      loadRooms(getCurrentSearchText());
+    });
+  });
+
+  const clearBtn = document.getElementById("clearFilters");
+  if (clearBtn) {
+    clearBtn.addEventListener("click", () => {
+      ["filterType", "filterBrokerage"].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.value = "";
+      });
+      selectedSearchPlace = null;
+      updateFilterUI();
+      loadRooms(getCurrentSearchText());
+    });
+  }
+
+  updateFilterUI();
+}
+
+function setPostMode(mode) {
+  activePostMode = mode === "needed" ? "needed" : "available";
+
+  document.getElementById("modeAvailableBtn")?.classList.toggle("active", activePostMode === "available");
+  document.getElementById("modeNeededBtn")?.classList.toggle("active", activePostMode === "needed");
+  updateFilterUI();
+
+  selectedSearchPlace = null;
+  hideSuggestionBox();
+  loadRooms(getCurrentSearchText());
+}
+
+function getCurrentScrollTop() {
+  const app = document.querySelector(".app-container");
+  if (window.innerWidth >= 900) {
+    return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  }
+  return app ? app.scrollTop : 0;
+}
+
+function updateModeSwitchCompact() {
+  const wrap = document.getElementById("modeSwitchWrap");
+  if (!wrap) return;
+
+  // Desktop has enough space, so keep the full Available/Needed switch sticky and always visible.
+  if (window.innerWidth >= 900) {
+    wrap.classList.remove("compact");
+    modeSwitchLastScroll = getCurrentScrollTop();
+    return;
+  }
+
+  const current = getCurrentScrollTop();
+  const diff = current - modeSwitchLastScroll;
+
+  // Expand immediately when user swipes/scrolls slightly upward, not only at the first post.
+  if (diff < -3) {
+    wrap.classList.remove("compact");
+    modeSwitchExpandedUntil = Date.now() + 650;
+  } else if (current <= 18) {
+    wrap.classList.remove("compact");
+  } else if (diff > 6 && current > 70 && Date.now() > modeSwitchExpandedUntil) {
+    wrap.classList.add("compact");
+  }
+
+  modeSwitchLastScroll = Math.max(0, current);
+}
+
+function setupModeSwitchScroll() {
+  const app = document.querySelector(".app-container");
+  modeSwitchLastScroll = getCurrentScrollTop();
+  if (app) app.addEventListener("scroll", updateModeSwitchCompact, { passive: true });
+  window.addEventListener("scroll", updateModeSwitchCompact, { passive: true });
+  window.addEventListener("resize", () => {
+    modeSwitchLastScroll = getCurrentScrollTop();
+    updateModeSwitchCompact();
+  });
+}
+
+async function fetchDatabaseSuggestions(searchText) {
+  let tableName = activePostMode === "needed" ? "room_requirements" : "room_posts";
+  let query = db
+    .from(tableName)
+    .select("location, type")
+    .ilike("location", `%${searchText}%`);
+
+  if (activePostMode === "available") {
+    query = query.eq("status", "active");
+  }
+
+  query = applyFiltersToQuery(query);
+
+  const { data, error } = await query.limit(60);
+
+  if (error) {
+    console.warn("Database suggestion error", error);
+    return [];
+  }
+
+  return buildDatabaseSuggestions(data || [], searchText);
+}
+
+async function findNearbyRooms(search, selectedPlace = null) {
+  if (activePostMode === "needed") return [];
+
+  const target = selectedPlace || await geocodeLocation(search);
+  if (!target || !Number.isFinite(target.lat) || !Number.isFinite(target.lon)) return [];
+
+  const { data, error } = await db
+    .from("room_posts")
+    .select("*, users!room_posts_user_id_fkey(name)")
+    .eq("status", "active")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  const nearby = [];
+
+  for (const room of data) {
+    const coords = await getRoomCoordinates(room);
+    if (!coords) continue;
+
+    const km = distanceKm(target.lat, target.lon, coords.lat, coords.lon);
+    room._distanceKm = km;
+    nearby.push(room);
+
+    if (!roomHasCoordinates(room)) await sleep(250);
+  }
+
+  nearby.sort((a, b) => a._distanceKm - b._distanceKm);
+
+  let filtered = nearby.filter(room => room._distanceKm <= 10);
+  if (!filtered.length) filtered = nearby.filter(room => room._distanceKm <= 18);
+
+  return filtered.slice(0, 12);
+}
+
+async function loadRooms(search = "", selectedPlace = null) {
+  const cleanSearch = cleanSearchTerm(search);
+
+  if (activePostMode === "needed") {
+    let query = db
+      .from("room_requirements")
+      .select("*, users!room_requirements_user_id_fkey(name)")
+      .order("created_at", { ascending: false });
+
+    if (cleanSearch) {
+      query = query.or(`location.ilike.%${cleanSearch}%,title.ilike.%${cleanSearch}%,description.ilike.%${cleanSearch}%,type.ilike.%${cleanSearch}%`);
+    }
+
+    query = applyFiltersToQuery(query);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error(error);
+      alert(error.message);
+      return;
+    }
+
+    const visible = (data || []).filter(item => !String(item.status || "").toLowerCase().startsWith("inactive"));
+    renderRooms(visible);
+    return;
+  }
+
+  let query = db.from("room_posts")
+    .select("*, users!room_posts_user_id_fkey(name)")
+    .eq("status", "active");
+
+  if (cleanSearch) {
+    query = query.ilike("location", `%${cleanSearch}%`);
+  }
+
+  query = applyFiltersToQuery(query);
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    alert(error.message);
+    return;
+  }
+
+  if (cleanSearch && (!data || data.length === 0)) {
+    const nearbyRooms = (await findNearbyRooms(cleanSearch, selectedPlace)).filter(roomMatchesActiveFilters);
+
+    if (nearbyRooms.length > 0) {
+      renderRooms(nearbyRooms, `No exact property found in “${cleanSearch}”. Showing nearby area properties with your selected filters.`);
+      return;
+    }
+  }
+
+  renderRooms(data);
+}
+
+function renderAvailableCard(room) {
+  let img = "https://via.placeholder.com/400x300?text=No+Image";
+  let imagesArr = [];
+
+  if (room.images && room.images.length > 0) {
+    imagesArr = room.images.split(",").map(s => s.trim()).filter(Boolean);
+    if (imagesArr.length > 0) img = imagesArr[0];
+  } else {
+    imagesArr = [img];
+  }
+
+  let brokerageText = "";
+  let isNoBrokerage = false;
+  if (room.brokerage_type === "No Brokerage" || !room.brokerage_type) {
+    brokerageText = "No Brokerage";
+    isNoBrokerage = true;
+  } else if (room.brokerage_amount) {
+    brokerageText = `Brokerage: ₹${room.brokerage_amount}`;
+  } else {
+    brokerageText = `Brokerage: ${room.brokerage_type}`;
+  }
+
+  let actions = "";
+
+  if (room.show_contact && room.contact_number) {
+    actions += `
+      <button class="btn-action btn-call" onclick="triggerAction(event, 'call', '${escapeHtml(room.id)}', '${escapeHtml(room.contact_number)}', 'available')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">call</span> Call
+      </button>
+    `;
+  }
+
+  if (room.show_whatsapp && room.whatsapp_number) {
+    actions += `
+      <button class="btn-action btn-wa" onclick="triggerAction(event, 'wa', '${escapeHtml(room.id)}', '${escapeHtml(room.whatsapp_number)}', 'available')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> WhatsApp
+      </button>
+    `;
+  }
+
+  actions += `
+    <button class="btn-action btn-chat" onclick="startChat(event, '${escapeHtml(room.id)}', '${escapeHtml(room.user_id)}')">
+      <span class="material-symbols-rounded" style="font-size: 18px;">forum</span> Chat
+    </button>
+  `;
+
+  const ownerObj = room.users || room.user || {};
+  const ownerName = ownerObj.name || "User";
+  const ownerAvatar = (ownerObj.avatar_url && ownerObj.avatar_url.trim()) ? ownerObj.avatar_url : getDefaultAvatar(ownerObj.gender);
+  const slidesHtml = imagesArr.map(src => `<img class="slide" src="${escapeHtml(src)}" alt="${escapeHtml(room.title || 'Room')}">`).join('');
+
+  return `
+    <div class="card" onclick="openRoom('${escapeHtml(room.id)}', 'available')">
+      <div class="card-img-wrapper">
+        <div class="slides-track">${slidesHtml}</div>
+        <div class="price-badge">₹${escapeHtml(room.rent || '')}</div>
+      </div>
+      <div class="card-content">
+        <div class="title">${escapeHtml(room.title || '')}</div>
+        <div class="owner-name"><img class="owner-avatar" src="${escapeHtml(ownerAvatar)}" alt="owner"> ${escapeHtml(ownerName)}</div>
+
+        <div class="location">
+          <span class="material-symbols-rounded">location_on</span>
+          ${escapeHtml(room.location || '')}
+        </div>
+
+        <div class="details-row">
+          <div class="detail-tag"><span class="material-symbols-rounded">apartment</span>${escapeHtml(room.type || '')}</div>
+          <div class="detail-tag"><span class="material-symbols-rounded">security</span>Dep: ₹${escapeHtml(room.deposit || '0')}</div>
+          <div class="detail-tag ${isNoBrokerage ? 'highlight' : ''}"><span class="material-symbols-rounded">handshake</span>${escapeHtml(brokerageText)}</div>
+        </div>
+
+        <div class="card-actions">${actions}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRequirementCard(req) {
+  let actions = "";
+
+  if (req.show_contact && req.contact_number) {
+    actions += `
+      <button class="btn-action btn-call" onclick="triggerAction(event, 'call', '${escapeHtml(req.id)}', '${escapeHtml(req.contact_number)}', 'requirement')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">call</span> Call
+      </button>
+    `;
+  }
+
+  if (req.show_whatsapp && req.whatsapp_number) {
+    actions += `
+      <button class="btn-action btn-wa" onclick="triggerAction(event, 'wa', '${escapeHtml(req.id)}', '${escapeHtml(req.whatsapp_number)}', 'requirement')">
+        <span class="material-symbols-rounded" style="font-size: 18px;">chat</span> WhatsApp
+      </button>
+    `;
+  }
+
+  actions += `
+    <button class="btn-action btn-chat" onclick="startChat(event, '${escapeHtml(req.id)}', '${escapeHtml(req.user_id)}')">
+      <span class="material-symbols-rounded" style="font-size: 18px;">forum</span> Chat
+    </button>
+  `;
+
+  const ownerObj = req.users || req.user || {};
+  const ownerName = req.name || ownerObj.name || "User";
+
+  return `
+    <div class="card requirement-card" onclick="openRoom('${escapeHtml(req.id)}', 'requirement')">
+      <div class="requirement-hero">
+        <div class="requirement-label"><span class="material-symbols-rounded" style="font-size:15px;">person_search</span>Room Needed</div>
+        <div class="requirement-vector"><span class="material-symbols-rounded">travel_explore</span></div>
+        <div class="title">${escapeHtml(req.title || 'Room requirement')}</div>
+        <div class="requirement-desc">${escapeHtml(req.description || 'Looking for a suitable room or roommate.')}</div>
+      </div>
+      <div class="card-content">
+        <div class="owner-name"><span class="material-symbols-rounded">account_circle</span> ${escapeHtml(ownerName)}</div>
+        <div class="location"><span class="material-symbols-rounded">location_on</span>${escapeHtml(req.location || 'Preferred location not added')}</div>
+        <div class="details-row">
+          <div class="detail-tag highlight"><span class="material-symbols-rounded">apartment</span>${escapeHtml(req.type || 'Any type')}</div>
+          <div class="detail-tag"><span class="material-symbols-rounded">verified</span>${escapeHtml(req.status || 'pending')}</div>
+        </div>
+        <div class="card-actions">${actions}</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRooms(items, statusText = "") {
+  const container = document.getElementById("roomList");
+  const noun = activePostMode === "needed" ? "requirements" : "rooms";
+  container.innerHTML = statusText ? `<div class="search-status"><span class="material-symbols-rounded">travel_explore</span><span>${statusText}</span></div>` : "";
+
+  if (!items || items.length === 0) {
+    container.innerHTML += `
+      <div class="no-results">
+        <span class="material-symbols-rounded" style="font-size: 56px; color: #CBD5E1; margin-bottom: 16px; display: block;">search_off</span>
+        <p style="font-size: 16px; font-weight: 500; color: #0F172A;">No ${noun} found for your search.</p>
+        <p style="font-size: 14px; margin-top: 8px;">Try adjusting your search or type filter.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML += items.map(item => activePostMode === "needed" ? renderRequirementCard(item) : renderAvailableCard(item)).join("");
+
+  if (activePostMode === "available") {
+    initCardSliders();
+  }
+}
+
+function openRoom(id, source = null) {
+  const finalSource = source === "requirement" || activePostMode === "needed" ? "requirement" : "available";
+  if (finalSource === "requirement") {
+    window.location.href = `roomdetails.html?id=${id}&source=requirement`;
+  } else {
+    window.location.href = `roomdetails.html?id=${id}`;
+  }
+}
+
+function triggerAction(event, type, roomId, info, source = null) {
+  event.stopPropagation();
+  const sourceParam = source === "requirement" || activePostMode === "needed" ? "&source=requirement" : "";
+  window.location.href = `roomdetails.html?id=${roomId}${sourceParam}&auto=${type}&info=${info}`;
+}
+
 /* INIT */
 loadFilterOptions();
 bindFilterEvents();
+setupModeSwitchScroll();
 loadRooms();
 
 // Check if user is logged in for alerts & periodic refreshes
