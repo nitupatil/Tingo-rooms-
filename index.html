@@ -2429,7 +2429,10 @@ function openChatList() {
 }
 
 /* =========================================
-   NEW NOTIFICATION LOGIC (AUTO-READ)
+   NOTIFICATION LOGIC
+   - loadNotifications() only loads and shows unread dot
+   - notifications are marked read only when panel is opened
+   - temporary onesignal_notifications rows are deleted only after seen
    ========================================= */
 
 /* OPEN NOTIFICATIONS */
@@ -2443,10 +2446,55 @@ async function openNotifications() {
 
   document.getElementById("notificationPanel").style.right = "0";
 
+  /* First show current notifications */
   await loadNotifications();
 
-  /* Delete only temporary OneSignal queue rows after user sees notifications */
+  /* Now consider them seen because user opened the panel */
+  await markNotificationsAsSeen();
   await clearSeenOneSignalNotifications();
+
+  /* Reload once so bold/unread state and red dot are correct */
+  await loadNotifications();
+}
+
+/* CLOSE NOTIFICATIONS */
+function closeNotifications() {
+  document.getElementById("notificationPanel").style.right = "-100%";
+}
+
+/* LOAD NOTIFICATIONS - DO NOT AUTO MARK READ HERE */
+async function loadNotifications() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  const { data, error } = await db
+    .from("notifications")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Notification loading error:", error);
+    return;
+  }
+
+  renderNotifications(data || []);
+}
+
+/* MARK NORMAL NOTIFICATIONS AS SEEN/READ ONLY WHEN PANEL IS OPENED */
+async function markNotificationsAsSeen() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  const { error } = await db
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("user_id", user.id)
+    .eq("is_read", false);
+
+  if (error) {
+    console.error("Mark notification as read failed:", error);
+  }
 }
 
 /* DELETE TEMPORARY PUSH QUEUE ROWS AFTER USER SEES NOTIFICATIONS */
@@ -2466,34 +2514,6 @@ async function clearSeenOneSignalNotifications() {
   }
 }
 
-/* CLOSE NOTIFICATIONS */
-function closeNotifications() {
-  document.getElementById("notificationPanel").style.right = "-100%";
-}
-
-/* LOAD NOTIFICATIONS (UPDATED TO AUTO MARK AS READ) */
-async function loadNotifications() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return;
-
-  const { data } = await db
-    .from("notifications")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (!data) return;
-
-  renderNotifications(data);
-
-  // AUTO MARK AS READ AFTER LOADING
-  await db
-    .from("notifications")
-    .update({ is_read: true })
-    .eq("user_id", user.id)
-    .eq("is_read", false);
-}
-
 /* RENDER NOTIFICATIONS */
 function renderNotifications(list) {
   const container = document.getElementById("notificationList");
@@ -2501,6 +2521,7 @@ function renderNotifications(list) {
 
   if (!list || list.length === 0) {
     container.innerHTML = "<p style='padding:15px; color:gray;'>No notifications</p>";
+    updateNotificationDot([]);
     return;
   }
 
@@ -2512,8 +2533,8 @@ function renderNotifications(list) {
         font-weight:${n.is_read ? "normal" : "bold"};
         background:${n.is_read ? "#fff" : "#eef2ff"};
       ">
-        <div>${n.title}</div>
-        <div style="font-size:12px;color:gray">${n.message}</div>
+        <div>${escapeHtml(n.title || "Notification")}</div>
+        <div style="font-size:12px;color:gray">${escapeHtml(n.message || "")}</div>
       </div>
     `;
   });
@@ -2523,33 +2544,33 @@ function renderNotifications(list) {
 
 /* RED DOT LOGIC */
 function updateNotificationDot(list) {
-  if (!list) return;
-  const hasUnread = list.some(n => !n.is_read);
-  document.querySelector(".badge").style.display = hasUnread ? "block" : "none";
+  const badge = document.querySelector(".notification .badge");
+  if (!badge) return;
+  const hasUnread = Array.isArray(list) && list.some(n => !n.is_read);
+  badge.style.display = hasUnread ? "block" : "none";
 }
 
-/* REALTIME SUBSCRIPTION */
+/* REALTIME NORMAL NOTIFICATION SUBSCRIPTION */
 function subscribeNotifications() {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return;
 
-  db.channel('notifications')
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'notifications',
+  db.channel("notifications_" + user.id)
+    .on("postgres_changes", {
+      event: "INSERT",
+      schema: "public",
+      table: "notifications",
       filter: `user_id=eq.${user.id}`
     }, payload => {
-      console.log("New notification:", payload);
-      loadNotifications(); // refresh
+      console.log("New notification:", payload.new);
+
+      /* Refresh only. Do not auto-read. */
+      loadNotifications();
     })
     .subscribe();
 }
 
-/* =========================================
-   TEMP ONESIGNAL QUEUE LISTENER
-   Refreshes notification UI when push queue row is inserted
-   ========================================= */
+/* TEMP ONESIGNAL QUEUE LISTENER */
 function subscribeOneSignalQueue() {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return;
@@ -2563,7 +2584,7 @@ function subscribeOneSignalQueue() {
     }, payload => {
       console.log("Temporary push notification row:", payload.new);
 
-      /* Refresh normal notification panel/badge */
+      /* Refresh normal notification panel/badge without marking read */
       loadNotifications();
     })
     .subscribe();
@@ -2603,7 +2624,7 @@ async function checkNewMessages() {
 
 /* =========================================
    ONESIGNAL MULTI-BROWSER SUBSCRIPTION SYNC
-   Saves every browser/device subscription
+   Saves every browser/device subscription into user_push_subscriptions
    ========================================= */
 async function syncOneSignalSubscription(user) {
   if (!user || !user.id) return;
@@ -2612,19 +2633,32 @@ async function syncOneSignalSubscription(user) {
 
   OneSignalDeferred.push(async function(OneSignal) {
     try {
-      /* Link OneSignal browser subscription to your app user */
+      /* Link this browser subscription to your app user */
       if (OneSignal.login) {
-        await OneSignal.login(user.id);
+        await OneSignal.login(String(user.id));
       }
 
-      /* Ask browser permission if not already allowed */
-      if (OneSignal.Notifications?.isPushSupported?.()) {
-        if (!OneSignal.Notifications.permission) {
-          await OneSignal.Notifications.requestPermission();
+      /* Ask permission and opt in if supported */
+      const pushSupported = OneSignal.Notifications?.isPushSupported
+        ? OneSignal.Notifications.isPushSupported()
+        : true;
+
+      if (pushSupported) {
+        const permission = OneSignal.Notifications?.permission;
+        if (permission !== true && permission !== "granted") {
+          try {
+            await OneSignal.Notifications.requestPermission();
+          } catch (permissionErr) {
+            console.warn("OneSignal permission prompt failed or was dismissed:", permissionErr);
+          }
         }
 
         if (OneSignal.User?.PushSubscription?.optIn) {
-          await OneSignal.User.PushSubscription.optIn();
+          try {
+            await OneSignal.User.PushSubscription.optIn();
+          } catch (optErr) {
+            console.warn("OneSignal opt-in failed:", optErr);
+          }
         }
       }
 
@@ -2637,17 +2671,19 @@ async function syncOneSignalSubscription(user) {
           return;
         }
 
+        const now = new Date().toISOString();
+
         const { error } = await db
           .from("user_push_subscriptions")
           .upsert({
             user_id: user.id,
             subscription_id: subscriptionId,
             onesignal_id: onesignalId,
-            external_id: user.id,
+            external_id: String(user.id),
             browser_info: navigator.userAgent,
             is_active: true,
-            last_seen_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            last_seen_at: now,
+            updated_at: now
           }, {
             onConflict: "subscription_id"
           });
@@ -2659,11 +2695,17 @@ async function syncOneSignalSubscription(user) {
         }
       }
 
+      /* Subscription can be null immediately after init, so retry a few times */
       await saveCurrentSubscription();
+      setTimeout(saveCurrentSubscription, 2000);
+      setTimeout(saveCurrentSubscription, 6000);
 
       /* Save again if OneSignal creates/changes the browser subscription */
       if (OneSignal.User?.PushSubscription?.addEventListener) {
         OneSignal.User.PushSubscription.addEventListener("change", async function() {
+          if (OneSignal.login) {
+            await OneSignal.login(String(user.id));
+          }
           await saveCurrentSubscription();
         });
       }
@@ -2673,7 +2715,6 @@ async function syncOneSignalSubscription(user) {
     }
   });
 }
-
 
 /* UPDATED HOME FEED: dynamic type + brokerage filters, Available/Needed mode, and improved sticky switch */
 function getActiveFilters() {
