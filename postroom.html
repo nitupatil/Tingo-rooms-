@@ -266,6 +266,50 @@ button.secondary-btn:active { background: #E0E7FF; }
 hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 .hidden { display: none !important; }
 
+/* POST TYPE CHOICE */
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.choice-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 22px;
+  border: 1px solid rgba(0,0,0,0.03);
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.choice-card:active {
+  transform: scale(0.98);
+  border-color: #A5B4FC;
+  box-shadow: 0 10px 20px var(--primary-glow);
+}
+
+.choice-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-light);
+  color: var(--primary);
+  margin-bottom: 16px;
+}
+
+.choice-icon .material-symbols-rounded { font-size: 30px; }
+.choice-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--text-main); }
+.choice-subtitle { font-size: 14px; line-height: 1.5; color: var(--text-muted); }
+.choice-arrow { margin-top: 16px; display: flex; justify-content: flex-end; color: var(--primary); }
+
+#reqMap { height: 220px; border-radius: 16px; z-index: 10; margin-bottom: 16px; border: 1px solid var(--border); }
+select#req_show_contact, select#req_show_whatsapp { padding-left: 16px; }
+
+
 /* LOCATION SUGGESTIONS */
 .autocomplete-wrapper { position: relative; }
 .suggestions-box {
@@ -281,20 +325,154 @@ hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
 /* DASHBOARD LIST ITEMS */
 .my-post-item {
-  display: flex; padding: 16px; border: 1px solid var(--border); border-radius: 20px; margin-bottom: 12px;
+  display: flex; padding: 12px; border: 1px solid var(--border); border-radius: 20px; margin-bottom: 12px;
   align-items: center; cursor: pointer; transition: background 0.2s, transform 0.2s; background: var(--surface);
   box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
 }
 .my-post-item:active { transform: scale(0.98); background: #F8FAFC; }
-.my-post-item img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; margin-right: 16px; }
+.my-post-item img { width: 62px; height: 62px; border-radius: 12px; object-fit: cover; margin-right: 12px; }
 .my-post-info { flex: 1; }
-.my-post-title { font-weight: 700; font-size: 16px; margin-bottom: 6px; color: var(--text-main); }
-.my-post-status { font-size: 11px; padding: 4px 10px; border-radius: 99px; display: inline-block; font-weight: 700; letter-spacing: 0.5px; }
+.my-post-title { font-weight: 700; font-size: 14px; line-height: 1.25; margin-bottom: 5px; color: var(--text-main); }
+.my-post-status { font-size: 9.5px; padding: 3px 8px; border-radius: 99px; display: inline-block; font-weight: 700; letter-spacing: 0.5px; }
 .status-new { background: #FEF3C7; color: #D97706; }
 .status-approved { background: #D1FAE5; color: #059669; }
 .status-rejected { background: #FEE2E2; color: #DC2626; }
-.edit-icon { color: #94A3B8; font-size: 24px; transition: color 0.2s; }
+.edit-icon { color: #94A3B8; font-size: 21px; transition: color 0.2s; }
 .my-post-item:hover .edit-icon { color: var(--primary); }
+
+
+
+/* COLORFUL APP VECTOR / STATUS UI */
+.vector-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ffffff 0%, #EEF2FF 55%, #ECFEFF 100%);
+}
+.vector-hero::before,
+.vector-hero::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(1px);
+  opacity: 0.75;
+}
+.vector-hero::before {
+  width: 110px;
+  height: 110px;
+  right: -42px;
+  top: -38px;
+  background: linear-gradient(135deg, #F97316, #FACC15);
+}
+.vector-hero::after {
+  width: 86px;
+  height: 86px;
+  left: -34px;
+  bottom: -34px;
+  background: linear-gradient(135deg, #22C55E, #06B6D4);
+}
+.vector-hero > * { position: relative; z-index: 1; }
+.vector-spot {
+  width: 78px;
+  height: 78px;
+  border-radius: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+  color: white;
+  box-shadow: 0 16px 30px rgba(79, 70, 229, 0.25);
+  background: linear-gradient(135deg, #4F46E5, #8B5CF6, #EC4899);
+}
+.vector-spot .material-symbols-rounded { font-size: 40px; }
+.choice-card {
+  position: relative;
+  overflow: hidden;
+}
+.choice-card::after {
+  content: "";
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  right: -54px;
+  bottom: -58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99,102,241,0.16), rgba(14,165,233,0.18));
+}
+.choice-card:nth-child(2)::after {
+  background: linear-gradient(135deg, rgba(249,115,22,0.16), rgba(34,197,94,0.18));
+}
+.choice-card:nth-child(1) .choice-icon { background: linear-gradient(135deg, #EEF2FF, #DBEAFE); color: #4F46E5; }
+.choice-card:nth-child(2) .choice-icon { background: linear-gradient(135deg, #FFF7ED, #DCFCE7); color: #EA580C; }
+.status-card {
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 48%, #EEF2FF 100%);
+}
+.status-info-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 20px;
+  margin-bottom: 18px;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(226,232,240,0.8);
+}
+.status-vector {
+  min-width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background: linear-gradient(135deg, #10B981, #06B6D4);
+  box-shadow: 0 12px 20px rgba(16,185,129,0.25);
+}
+.status-vector.warning {
+  background: linear-gradient(135deg, #F97316, #EF4444);
+  box-shadow: 0 12px 20px rgba(249,115,22,0.22);
+}
+.status-vector .material-symbols-rounded { font-size: 30px; }
+.status-help-title { font-size: 14px; font-weight: 800; color: var(--text-main); margin-bottom: 3px; }
+.status-help-text { font-size: 12px; line-height: 1.4; color: var(--text-muted); }
+.status-pending { background: #DBEAFE; color: #2563EB; }
+.status-active { background: #D1FAE5; color: #059669; }
+.status-inactive,
+.status-inactive-rented_out,
+.status-inactive-no_more_available,
+.status-inactive-wrong_details,
+.status-inactive-duplicate_post,
+.status-inactive-room_found,
+.status-inactive-no_more_needed,
+.status-inactive-other { background: #FEE2E2; color: #DC2626; }
+.post-type-badge {
+  font-size: 9px;
+  padding: 3px 7px;
+  border-radius: 99px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  background: #EEF2FF;
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+.post-type-badge.requirement { background: #FFF7ED; color: #EA580C; }
+.post-avatar {
+  min-width: 62px;
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: white;
+  background: linear-gradient(135deg, #4F46E5, #06B6D4);
+  box-shadow: 0 10px 18px rgba(79,70,229,.18);
+}
+.post-avatar.requirement { background: linear-gradient(135deg, #F97316, #22C55E); }
+.post-avatar .material-symbols-rounded { font-size: 30px; }
 
 /* BOTTOM NAV */
 @media (max-width: 899px) {
@@ -407,10 +585,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 <div class="app-container">
 
   <div class="header">
-    <div class="back-btn hidden" id="backToDashBtn" onclick="showDashboard()">
+    <div class="back-btn hidden" id="backToDashBtn" onclick="handleBack()">
       <span class="material-symbols-rounded">arrow_back</span>
     </div>
-    <div class="header-title" id="pageTitle">My Properties</div>
+    <div class="header-title" id="pageTitle">My Posts</div>
   </div>
 
   <div class="main-content">
@@ -418,18 +596,46 @@ hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
     <div id="dashboardView" class="hidden">
       
       <div class="sticky-dash-header">
-        <button class="primary-btn" onclick="showForm()" style="margin-bottom: 16px;">
+        <button class="primary-btn" onclick="showChoice()" style="margin-bottom: 16px;">
           <span class="material-symbols-rounded">add_circle</span> Create New Post
         </button>
         
         <div class="input-group" style="margin-bottom: 0;">
           <span class="material-symbols-rounded icon-left">search</span>
-          <input type="text" id="dashSearch" placeholder="Search my properties..." oninput="filterDashboard()">
+          <input type="text" id="dashSearch" placeholder="Search my posts..." oninput="filterDashboard()">
         </div>
       </div>
 
       <div id="myPostsList">
         <p style="text-align:center; color:#94A3B8; font-size: 14px; margin-top:30px; font-weight: 500;">Loading your posts...</p>
+      </div>
+    </div>
+
+
+
+    <div id="choiceView" class="hidden">
+      <div class="card vector-hero" style="text-align:center;">
+        <div class="vector-spot">
+          <span class="material-symbols-rounded">add_home</span>
+        </div>
+        <h2 style="font-size:22px; margin-bottom:8px;">What do you want to post?</h2>
+        <p style="font-size:14px; color:var(--text-muted); line-height:1.5;">Choose one option below. Property posts go to room_posts and requirement posts go to room_requirements.</p>
+      </div>
+
+      <div class="choice-grid">
+        <div class="choice-card" onclick="showForm(true, false)">
+          <div class="choice-icon"><span class="material-symbols-rounded">home_work</span></div>
+          <div class="choice-title">I have a room / property</div>
+          <div class="choice-subtitle">List your room, flat, PG, or property for rent. This will use your existing property posting process.</div>
+          <div class="choice-arrow"><span class="material-symbols-rounded">arrow_forward</span></div>
+        </div>
+
+        <div class="choice-card" onclick="showRequirementForm()">
+          <div class="choice-icon"><span class="material-symbols-rounded">person_search</span></div>
+          <div class="choice-title">I need a room / roommate</div>
+          <div class="choice-subtitle">Post your requirement for 1RK, 1BHK, 2BHK, or PG. This will save details in room_requirements.</div>
+          <div class="choice-arrow"><span class="material-symbols-rounded">arrow_forward</span></div>
+        </div>
       </div>
     </div>
 
@@ -446,10 +652,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
           <span class="material-symbols-rounded icon-left">category</span>
           <select id="type">
             <option value="" disabled selected>Select Property Type</option>
+            <option>1RK</option>
             <option>1BHK</option>
             <option>2BHK</option>
-            <option>1RK</option>
+            <option>3BHK</option>
             <option>PG</option>
+            <option>Shop on Rent</option>
+            <option>Office Space</option>
+            <option>Commercial Space</option>
             <option>Other</option>
           </select>
         </div>
@@ -540,8 +750,138 @@ hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
         </div>
       </div>
 
+      <div class="card status-card">
+        <div class="section-title"><span class="material-symbols-rounded">published_with_changes</span> Post Status</div>
+        <div class="input-group">
+          <label>Change Status</label>
+          <span class="material-symbols-rounded icon-left">toggle_on</span>
+          <select id="post_status_choice" onchange="toggleInactiveReason('property')">
+            <option value="active">Active / Submit Again</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div class="input-group hidden" id="postInactiveReasonWrapper">
+          <label>Inactive Reason</label>
+          <span class="material-symbols-rounded icon-left">block</span>
+          <select id="post_inactive_reason">
+            <option value="rented_out">Rented out</option>
+            <option value="no_more_available">No more available</option>
+            <option value="wrong_details">Wrong details</option>
+            <option value="duplicate_post">Duplicate post</option>
+            <option value="other">Other reason</option>
+          </select>
+        </div>
+      </div>
+
       <button id="submitBtn" class="primary-btn" onclick="submitPost()">Submit Property</button>
     </div>
+
+    <div id="requirementFormView" class="hidden">
+      <div class="card">
+        <div class="section-title"><span class="material-symbols-rounded">person_search</span> Requirement Details</div>
+
+        <div class="input-group">
+          <span class="material-symbols-rounded icon-left">person</span>
+          <input id="req_name" placeholder="Your Name">
+        </div>
+
+        <div class="input-group">
+          <span class="material-symbols-rounded icon-left">title</span>
+          <input id="req_title" placeholder="Requirement Title (e.g. Need 1RK in Bavdhan)">
+        </div>
+
+        <div class="input-group">
+          <span class="material-symbols-rounded icon-left">category</span>
+          <select id="req_type">
+            <option value="" disabled selected>Select Required Type</option>
+            <option>1RK</option>
+            <option>1BHK</option>
+            <option>2BHK</option>
+            <option>PG</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <textarea id="req_description" placeholder="Describe your requirement, budget, preferred area, roommate preference, move-in date, etc..."></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title"><span class="material-symbols-rounded">location_on</span> Preferred Location</div>
+
+        <div class="input-group autocomplete-wrapper">
+          <span class="material-symbols-rounded icon-left">search</span>
+          <input id="req_loc" placeholder="Search preferred location or pin on map..." autocomplete="off">
+          <div id="reqLocSuggestions" class="suggestions-box hidden"></div>
+        </div>
+
+        <button class="secondary-btn" onclick="detectRequirementLocation()">
+          <span class="material-symbols-rounded" style="font-size: 20px;">my_location</span> Use Current GPS Location
+        </button>
+
+        <div id="reqMap"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title"><span class="material-symbols-rounded">support_agent</span> Contact Details</div>
+
+        <div class="input-group">
+          <span class="material-symbols-rounded icon-left">call</span>
+          <input id="req_contact" type="tel" placeholder="Contact Number">
+        </div>
+
+        <div class="input-group" style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+          <label style="margin:0;">Show Contact to Public?</label>
+          <select id="req_show_contact" style="width: 100px; padding: 10px 16px; border-radius: 12px;">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+
+        <hr>
+
+        <div class="input-group">
+          <span class="material-symbols-rounded icon-left">forum</span>
+          <input id="req_whatsapp" type="tel" placeholder="WhatsApp Number">
+        </div>
+
+        <div class="input-group" style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+          <label style="margin:0;">Show WhatsApp?</label>
+          <select id="req_show_whatsapp" style="width: 100px; padding: 10px 16px; border-radius: 12px;">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card status-card">
+        <div class="section-title"><span class="material-symbols-rounded">published_with_changes</span> Requirement Status</div>
+        <div class="input-group">
+          <label>Change Status</label>
+          <span class="material-symbols-rounded icon-left">toggle_on</span>
+          <select id="req_status_choice" onchange="toggleInactiveReason('requirement')">
+            <option value="active">Active / Submit Again</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div class="input-group hidden" id="reqInactiveReasonWrapper">
+          <label>Inactive Reason</label>
+          <span class="material-symbols-rounded icon-left">block</span>
+          <select id="req_inactive_reason">
+            <option value="room_found">Room found</option>
+            <option value="no_more_needed">No more needed</option>
+            <option value="wrong_details">Wrong details</option>
+            <option value="duplicate_post">Duplicate requirement</option>
+            <option value="other">Other reason</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="reqSubmitBtn" class="primary-btn" onclick="submitRequirement()">Submit Requirement</button>
+    </div>
+
 
   </div>
 
@@ -581,17 +921,28 @@ const currentUser = JSON.parse(localStorage.getItem("user"));
 
 // Elements
 const dashView = document.getElementById("dashboardView");
+const choiceView = document.getElementById("choiceView");
 const formView = document.getElementById("formView");
+const requirementFormView = document.getElementById("requirementFormView");
 const backBtn = document.getElementById("backToDashBtn");
 const pageTitle = document.getElementById("pageTitle");
 const locInput = document.getElementById("loc");
 const suggestionsBox = document.getElementById("locSuggestions");
 const submitBtn = document.getElementById("submitBtn");
+const reqLocInput = document.getElementById("req_loc");
+const reqSuggestionsBox = document.getElementById("reqLocSuggestions");
+const reqSubmitBtn = document.getElementById("reqSubmitBtn");
 
 let lat = null;
 let lng = null;
 let map;
 let marker;
+
+let reqLat = null;
+let reqLng = null;
+let reqMap;
+let reqMarker;
+let currentScreen = "dashboard";
 
 // State Variables
 let myPostsData = [];
@@ -608,17 +959,46 @@ window.onload = () => {
 };
 
 /* ---------------- VIEW ROUTING ---------------- */
-function showDashboard() {
+function hideAllViews() {
+  dashView.classList.add("hidden");
+  choiceView.classList.add("hidden");
   formView.classList.add("hidden");
+  requirementFormView.classList.add("hidden");
+}
+
+function handleBack() {
+  if (currentScreen === "choice") {
+    showDashboard();
+    return;
+  }
+  if (currentScreen === "propertyForm" || currentScreen === "requirementForm") {
+    showChoice();
+    return;
+  }
+  showDashboard();
+}
+
+function showDashboard() {
+  hideAllViews();
   dashView.classList.remove("hidden");
   backBtn.classList.add("hidden");
-  pageTitle.innerText = "My Properties";
+  pageTitle.innerText = "My Posts";
+  currentScreen = "dashboard";
   fetchMyPosts();
 }
 
+function showChoice() {
+  hideAllViews();
+  choiceView.classList.remove("hidden");
+  backBtn.classList.remove("hidden");
+  pageTitle.innerText = "Create New Post";
+  currentScreen = "choice";
+}
+
 function showForm(canGoBack = true, isEdit = false) {
-  dashView.classList.add("hidden");
+  hideAllViews();
   formView.classList.remove("hidden");
+  currentScreen = "propertyForm";
   
   if(canGoBack && currentUser) {
     backBtn.classList.remove("hidden");
@@ -636,6 +1016,27 @@ function showForm(canGoBack = true, isEdit = false) {
       if(lat && lng) {
         setMarker(lat, lng);
         map.setView([lat, lng], 15);
+      }
+    }, 200);
+  }
+}
+
+function showRequirementForm(isEdit = false) {
+  hideAllViews();
+  requirementFormView.classList.remove("hidden");
+  backBtn.classList.remove("hidden");
+  pageTitle.innerText = isEdit ? "Edit Requirement" : "Post Requirement";
+  currentScreen = "requirementForm";
+  if (!isEdit) clearRequirementForm();
+
+  if (!reqMap) {
+    initRequirementMap();
+  } else {
+    setTimeout(() => {
+      reqMap.invalidateSize();
+      if(reqLat && reqLng) {
+        setRequirementMarker(reqLat, reqLng);
+        reqMap.setView([reqLat, reqLng], 15);
       }
     }, 200);
   }
@@ -671,18 +1072,62 @@ function go(page) {
 }
 
 /* ---------------- DASHBOARD DATA & SEARCH ---------------- */
+function normalizeStatus(status) {
+  const raw = (status || "pending").toString().toLowerCase();
+  return raw.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "pending";
+}
+
+function getStatusLabel(status) {
+  const raw = (status || "pending").toString();
+  const lower = raw.toLowerCase();
+  const reasonLabels = {
+    rented_out: "Rented out",
+    no_more_available: "No more available",
+    wrong_details: "Wrong details",
+    duplicate_post: "Duplicate post",
+    room_found: "Room found",
+    no_more_needed: "No more needed",
+    other: "Other reason"
+  };
+
+  if (lower.startsWith("inactive-")) {
+    const reason = raw.substring(raw.indexOf("-") + 1);
+    return "INACTIVE - " + (reasonLabels[reason] || reason.replace(/_/g, " "));
+  }
+
+  if (lower === "new") return "PENDING";
+  return raw.toUpperCase();
+}
+
 async function fetchMyPosts() {
   if (!currentUser) return;
   const listContainer = document.getElementById("myPostsList");
-  
-  const { data, error } = await db.from("room_posts")
-    .select("*")
-    .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false });
+  listContainer.innerHTML = "<p style='text-align:center; color:#94A3B8; font-size: 14px; margin-top:30px; font-weight: 500;'>Loading your posts...</p>";
 
-  if (error) { listContainer.innerHTML = "<p style='text-align:center; color:#EF4444;'>Error loading posts.</p>"; return; }
-  
-  myPostsData = data; 
+  const [propertyResult, requirementResult] = await Promise.all([
+    db.from("room_posts")
+      .select("*")
+      .eq("user_id", currentUser.id)
+      .order("created_at", { ascending: false }),
+    db.from("room_requirements")
+      .select("*")
+      .eq("user_id", currentUser.id)
+      .order("created_at", { ascending: false })
+  ]);
+
+  if (propertyResult.error || requirementResult.error) {
+    console.error("My Posts Load Error:", propertyResult.error || requirementResult.error);
+    listContainer.innerHTML = "<p style='text-align:center; color:#EF4444;'>Error loading posts.</p>";
+    return;
+  }
+
+  const propertyPosts = (propertyResult.data || []).map(post => ({ ...post, post_kind: "property" }));
+  const requirementPosts = (requirementResult.data || []).map(post => ({ ...post, post_kind: "requirement" }));
+
+  myPostsData = [...propertyPosts, ...requirementPosts].sort((a, b) => {
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
+
   renderDashboardList(myPostsData);
 }
 
@@ -692,29 +1137,43 @@ function renderDashboardList(posts) {
   if (posts.length === 0) {
     listContainer.innerHTML = `
       <div style="text-align:center; padding: 40px 20px; color: var(--text-muted); background: var(--surface); border-radius: var(--radius); border: 1px solid rgba(0,0,0,0.02); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);">
-        <div style="width: 80px; height: 80px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
-          <span class="material-symbols-rounded" style="font-size: 40px; color: var(--primary);">home_work</span>
+        <div style="width: 80px; height: 80px; background: linear-gradient(135deg,#EEF2FF,#ECFEFF); border-radius: 28px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: var(--primary);">
+          <span class="material-symbols-rounded" style="font-size: 42px;">dynamic_feed</span>
         </div>
-        <h3 style="color: var(--text-main); font-size: 18px; margin-bottom: 8px;">No properties yet</h3>
-        <p style="font-size: 14px;">Tap 'Create New Post' to list your first property.</p>
+        <h3 style="color: var(--text-main); font-size: 18px; margin-bottom: 8px;">No posts yet</h3>
+        <p style="font-size: 14px;">Tap 'Create New Post' to list a property or post your requirement.</p>
       </div>`;
     return;
   }
 
   listContainer.innerHTML = "";
-  posts.forEach(room => {
-    let img = "https://via.placeholder.com/100x100?text=No+Img";
-    if (room.images && room.images.length > 0) img = room.images.split(",")[0];
-    
-    let statusClass = "status-" + (room.status || "new").toLowerCase();
-    
+  posts.forEach(post => {
+    const isRequirement = post.post_kind === "requirement";
+    const statusClass = "status-" + normalizeStatus(post.status || "pending");
+    const statusText = getStatusLabel(post.status || "pending");
+    const clickFn = isRequirement ? `editRequirement('${post.id}')` : `editPost('${post.id}')`;
+    const badgeText = isRequirement ? "Requirement" : "Property";
+    const badgeClass = isRequirement ? "post-type-badge requirement" : "post-type-badge";
+    const iconName = isRequirement ? "person_search" : "home_work";
+    const avatarClass = isRequirement ? "post-avatar requirement" : "post-avatar";
+    const subText = isRequirement
+      ? `${post.type || "Requirement"} | ${post.location || "Location not added"}`
+      : `₹ ${post.rent || "-"} | ${post.type || "Property"}`;
+
+    let leadingHtml = `<div class="${avatarClass}"><span class="material-symbols-rounded">${iconName}</span></div>`;
+    if (!isRequirement && post.images && post.images.length > 0) {
+      const img = post.images.split(",")[0];
+      leadingHtml = `<img src="${img}" alt="Room">`;
+    }
+
     listContainer.innerHTML += `
-      <div class="my-post-item" onclick="editPost('${room.id}')">
-        <img src="${img}" alt="Room">
+      <div class="my-post-item" onclick="${clickFn}">
+        ${leadingHtml}
         <div class="my-post-info">
-          <div class="my-post-title">${room.title}</div>
-          <div style="font-size: 14px; color: #64748B; margin-bottom: 8px; font-weight: 500;">₹ ${room.rent} | ${room.type}</div>
-          <div class="my-post-status ${statusClass}">${(room.status || "NEW").toUpperCase()}</div>
+          <div class="${badgeClass}"><span class="material-symbols-rounded" style="font-size:11px;">${iconName}</span>${badgeText}</div>
+          <div class="my-post-title">${post.title || "Untitled Post"}</div>
+          <div style="font-size: 12px; color: #64748B; margin-bottom: 7px; font-weight: 500; line-height: 1.3;">${subText}</div>
+          <div class="my-post-status ${statusClass}">${statusText}</div>
         </div>
         <span class="material-symbols-rounded edit-icon">edit_square</span>
       </div>
@@ -727,14 +1186,65 @@ function filterDashboard() {
   const filtered = myPostsData.filter(post => 
     (post.title && post.title.toLowerCase().includes(query)) ||
     (post.location && post.location.toLowerCase().includes(query)) ||
-    (post.type && post.type.toLowerCase().includes(query))
+    (post.type && post.type.toLowerCase().includes(query)) ||
+    (post.status && post.status.toLowerCase().includes(query)) ||
+    (post.post_kind && post.post_kind.toLowerCase().includes(query))
   );
   renderDashboardList(filtered);
 }
 
 /* ---------------- EDIT POST LOGIC ---------------- */
+function applyStatusToControls(status, target) {
+  const rawStatus = (status || "pending").toString();
+  const isInactive = rawStatus.toLowerCase().startsWith("inactive-");
+  const choiceId = target === "property" ? "post_status_choice" : "req_status_choice";
+  const reasonId = target === "property" ? "post_inactive_reason" : "req_inactive_reason";
+
+  document.getElementById(choiceId).value = isInactive ? "inactive" : "active";
+
+  if (isInactive) {
+    const reason = rawStatus.substring(rawStatus.indexOf("-") + 1) || "other";
+    const reasonSelect = document.getElementById(reasonId);
+    const hasOption = Array.from(reasonSelect.options).some(option => option.value === reason);
+    reasonSelect.value = hasOption ? reason : "other";
+  }
+
+  toggleInactiveReason(target);
+}
+
+function getStatusForSave(target) {
+  const choiceId = target === "property" ? "post_status_choice" : "req_status_choice";
+  const reasonId = target === "property" ? "post_inactive_reason" : "req_inactive_reason";
+  const choice = document.getElementById(choiceId).value;
+
+  if (choice === "inactive") {
+    return "inactive-" + document.getElementById(reasonId).value;
+  }
+
+  return "pending";
+}
+
+function toggleInactiveReason(target) {
+  const choiceId = target === "property" ? "post_status_choice" : "req_status_choice";
+  const wrapperId = target === "property" ? "postInactiveReasonWrapper" : "reqInactiveReasonWrapper";
+  const vectorId = target === "property" ? "propertyStatusVector" : "requirementStatusVector";
+  const choice = document.getElementById(choiceId).value;
+  const wrapper = document.getElementById(wrapperId);
+  const vector = document.getElementById(vectorId);
+
+  if (choice === "inactive") {
+    wrapper.classList.remove("hidden");
+    vector.classList.add("warning");
+    vector.innerHTML = `<span class="material-symbols-rounded">block</span>`;
+  } else {
+    wrapper.classList.add("hidden");
+    vector.classList.remove("warning");
+    vector.innerHTML = `<span class="material-symbols-rounded">task_alt</span>`;
+  }
+}
+
 function editPost(id) {
-  const room = myPostsData.find(p => p.id === id);
+  const room = myPostsData.find(p => p.id === id && p.post_kind === "property");
   if (!room) return;
 
   currentEditingPostId = room.id;
@@ -753,6 +1263,7 @@ function editPost(id) {
   document.getElementById('brokerage_type').value = room.brokerage_type || "No Brokerage";
   document.getElementById('brokerage_amount').value = room.brokerage_amount || "";
   document.getElementById('images').value = ""; 
+  applyStatusToControls(room.status || "pending", "property");
   
   lat = room.latitude;
   lng = room.longitude;
@@ -761,8 +1272,32 @@ function editPost(id) {
 
   pageTitle.innerText = "Edit Property";
   submitBtn.innerHTML = "Update Property";
-  
   showForm(true, true);
+}
+
+function editRequirement(id) {
+  const req = myPostsData.find(p => p.id === id && p.post_kind === "requirement");
+  if (!req) return;
+
+  currentEditingRequirementId = req.id;
+
+  document.getElementById('req_name').value = req.name || currentUser?.name || currentUser?.full_name || "";
+  document.getElementById('req_title').value = req.title || "";
+  document.getElementById('req_type').value = req.type || "";
+  document.getElementById('req_loc').value = req.location || "";
+  document.getElementById('req_description').value = req.description || "";
+  document.getElementById('req_contact').value = req.contact_number || "";
+  document.getElementById('req_whatsapp').value = req.whatsapp_number || "";
+  document.getElementById('req_show_contact').value = req.show_contact === false ? "false" : "true";
+  document.getElementById('req_show_whatsapp').value = req.show_whatsapp === false ? "false" : "true";
+  applyStatusToControls(req.status || "pending", "requirement");
+
+  reqLat = req.latitude;
+  reqLng = req.longitude;
+
+  reqSubmitBtn.innerHTML = "Update Requirement";
+  reqSubmitBtn.disabled = false;
+  showRequirementForm(true);
 }
 
 function clearForm() {
@@ -782,14 +1317,41 @@ function clearForm() {
   document.getElementById('brokerage_type').value = "No Brokerage";
   document.getElementById('brokerage_amount').value = "";
   document.getElementById('images').value = "";
+  applyStatusToControls("pending", "property");
   
   lat = null;
   lng = null;
   if(marker && map) map.removeLayer(marker);
+  marker = null;
   
   toggleBrokerage();
   pageTitle.innerText = "Post Property";
   submitBtn.innerHTML = "Submit Property";
+  submitBtn.disabled = false;
+}
+
+let currentEditingRequirementId = null;
+
+function clearRequirementForm() {
+  currentEditingRequirementId = null;
+  document.getElementById('req_name').value = currentUser?.name || currentUser?.full_name || "";
+  document.getElementById('req_title').value = "";
+  document.getElementById('req_type').value = "";
+  document.getElementById('req_loc').value = "";
+  document.getElementById('req_description').value = "";
+  document.getElementById('req_contact').value = currentUser?.phone || "";
+  document.getElementById('req_whatsapp').value = currentUser?.phone || "";
+  document.getElementById('req_show_contact').value = "true";
+  document.getElementById('req_show_whatsapp').value = "true";
+  applyStatusToControls("pending", "requirement");
+
+  reqLat = null;
+  reqLng = null;
+  if(reqMarker && reqMap) reqMap.removeLayer(reqMarker);
+  reqMarker = null;
+
+  reqSubmitBtn.innerHTML = "Submit Requirement";
+  reqSubmitBtn.disabled = false;
 }
 
 /* ---------------- MAP & GEOCODING ---------------- */
@@ -877,6 +1439,93 @@ document.addEventListener('click', (e) => {
   }
 });
 
+
+
+/* ---------------- REQUIREMENT MAP & GEOCODING ---------------- */
+function initRequirementMap() {
+  reqMap = L.map('reqMap').setView([18.52, 73.85], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(reqMap);
+
+  reqMap.on("click", async (e) => {
+    reqLat = e.latlng.lat;
+    reqLng = e.latlng.lng;
+    setRequirementMarker(reqLat, reqLng);
+    await reverseGeocodeRequirement(reqLat, reqLng);
+  });
+}
+
+function setRequirementMarker(lt, lg) {
+  if (reqMarker) reqMap.removeLayer(reqMarker);
+  reqMarker = L.marker([lt, lg]).addTo(reqMap);
+}
+
+function detectRequirementLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async pos => {
+      reqLat = pos.coords.latitude;
+      reqLng = pos.coords.longitude;
+      reqMap.setView([reqLat, reqLng], 15);
+      setRequirementMarker(reqLat, reqLng);
+      await reverseGeocodeRequirement(reqLat, reqLng);
+    });
+  } else {
+    alert("Geolocation is not supported by this browser.");
+  }
+}
+
+async function reverseGeocodeRequirement(lat, lon) {
+  try {
+    reqLocInput.value = "Fetching address...";
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+    const data = await res.json();
+    if(data && data.display_name) { reqLocInput.value = data.display_name; }
+    else { reqLocInput.value = ""; }
+  } catch (err) {
+    console.error(err);
+    reqLocInput.value = "";
+  }
+}
+
+let reqLocTimeout;
+reqLocInput.addEventListener('input', (e) => {
+  clearTimeout(reqLocTimeout);
+  const val = e.target.value.trim();
+  if(val.length < 3) { reqSuggestionsBox.classList.add("hidden"); return; }
+  reqLocTimeout = setTimeout(() => fetchRequirementSuggestions(val), 600);
+});
+
+async function fetchRequirementSuggestions(query) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=in&limit=5`);
+    const data = await res.json();
+
+    reqSuggestionsBox.innerHTML = "";
+    if (data.length === 0) { reqSuggestionsBox.classList.add("hidden"); return; }
+
+    data.forEach(place => {
+      const div = document.createElement("div");
+      div.className = "suggestion-item";
+      div.innerText = place.display_name;
+      div.onclick = () => {
+        reqLocInput.value = place.display_name;
+        reqLat = parseFloat(place.lat);
+        reqLng = parseFloat(place.lon);
+        setRequirementMarker(reqLat, reqLng);
+        reqMap.setView([reqLat, reqLng], 15);
+        reqSuggestionsBox.classList.add("hidden");
+      };
+      reqSuggestionsBox.appendChild(div);
+    });
+    reqSuggestionsBox.classList.remove("hidden");
+  } catch(e) { console.error(e); }
+}
+
+document.addEventListener('click', (e) => {
+  if (!reqLocInput.contains(e.target) && !reqSuggestionsBox.contains(e.target)) {
+    reqSuggestionsBox.classList.add("hidden");
+  }
+});
+
 /* ---------------- FORM & SUBMIT LOGIC ---------------- */
 function toggleBrokerage() {
   const type = document.getElementById('brokerage_type').value;
@@ -903,7 +1552,25 @@ function getFormData() {
     show_whatsapp: document.getElementById('show_whatsapp').value,
     brokerage_type: document.getElementById('brokerage_type').value,
     brokerage_amount: document.getElementById('brokerage_amount').value,
+    post_status: getStatusForSave("property"),
     lat, lng
+  };
+}
+
+function getRequirementFormData() {
+  return {
+    name: document.getElementById('req_name').value,
+    title: document.getElementById('req_title').value,
+    type: document.getElementById('req_type').value,
+    location: document.getElementById('req_loc').value,
+    description: document.getElementById('req_description').value,
+    contact: document.getElementById('req_contact').value,
+    whatsapp: document.getElementById('req_whatsapp').value,
+    show_contact: document.getElementById('req_show_contact').value,
+    show_whatsapp: document.getElementById('req_show_whatsapp').value,
+    post_status: getStatusForSave("requirement"),
+    reqLat,
+    reqLng
   };
 }
 
@@ -928,7 +1595,6 @@ async function submitPost() {
     return;
   }
 
-  // --- NEW VALIDATION LOGIC ---
   const dataForm = getFormData();
   let missingFields = [];
 
@@ -939,17 +1605,14 @@ async function submitPost() {
   if (!dataForm.description.trim()) missingFields.push("Description");
   if (!dataForm.contact.trim()) missingFields.push("Contact Number");
 
-  // Dynamic check for brokerage amount
   if ((dataForm.brokerage_type === "Applicable" || dataForm.brokerage_type === "Negotiable") && !dataForm.brokerage_amount) {
     missingFields.push("Brokerage Amount");
   }
 
-  // If there are missing fields, stop submission and alert the user
   if (missingFields.length > 0) {
     alert("Please fill in the following required fields before submitting:\n\n• " + missingFields.join("\n• "));
-    return; // Exit the function early
+    return;
   }
-  // ----------------------------
 
   const isUpdating = currentEditingPostId !== null;
   submitBtn.innerHTML = `<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">sync</span> ${isUpdating ? 'Updating...' : 'Uploading...'}`;
@@ -979,14 +1642,14 @@ async function submitPost() {
       show_whatsapp: dataForm.show_whatsapp === "true",
       brokerage_type: dataForm.brokerage_type,
       brokerage_amount: dataForm.brokerage_amount || null,
-      status: "new", 
+      status: dataForm.post_status,
       updated_at: new Date().toISOString() 
     };
 
     if (isUpdating) {
       const { error } = await db.from("room_posts").update(payload).eq("id", currentEditingPostId);
       if (error) throw error;
-      alert("Property updated and submitted for review!");
+      alert(payload.status.startsWith("inactive-") ? "Property marked inactive." : "Property submitted again for review.");
     } else {
       payload.user_id = currentUser.id;
       const { error } = await db.from("room_posts").insert(payload);
@@ -1003,6 +1666,71 @@ async function submitPost() {
   } finally {
     submitBtn.innerHTML = currentEditingPostId ? "Update Property" : "Submit Property";
     submitBtn.disabled = false;
+  }
+}
+
+async function submitRequirement() {
+  if (!currentUser) {
+    alert("Please log in or create an account to publish your requirement.");
+    window.location.href = "user.html?redirect=postroom.html";
+    return;
+  }
+
+  const dataForm = getRequirementFormData();
+  let missingFields = [];
+
+  if (!dataForm.name.trim()) missingFields.push("Name");
+  if (!dataForm.title.trim()) missingFields.push("Requirement Title");
+  if (!dataForm.type) missingFields.push("Required Type");
+  if (!dataForm.location.trim()) missingFields.push("Preferred Location");
+  if (!dataForm.description.trim()) missingFields.push("Description");
+  if (!dataForm.contact.trim()) missingFields.push("Contact Number");
+
+  if (missingFields.length > 0) {
+    alert("Please fill in the following required fields before submitting:\n\n• " + missingFields.join("\n• "));
+    return;
+  }
+
+  const isUpdating = currentEditingRequirementId !== null;
+  reqSubmitBtn.innerHTML = `<span class="material-symbols-rounded" style="animation: spin 1s linear infinite;">sync</span> ${isUpdating ? 'Updating...' : 'Submitting...'}`;
+  reqSubmitBtn.disabled = true;
+
+  try {
+    const payload = {
+      name: dataForm.name,
+      title: dataForm.title,
+      type: dataForm.type,
+      location: dataForm.location,
+      latitude: dataForm.reqLat,
+      longitude: dataForm.reqLng,
+      description: dataForm.description,
+      contact_number: dataForm.contact,
+      show_contact: dataForm.show_contact === "true",
+      whatsapp_number: dataForm.whatsapp,
+      show_whatsapp: dataForm.show_whatsapp === "true",
+      status: dataForm.post_status
+    };
+
+    if (isUpdating) {
+      const { error } = await db.from("room_requirements").update(payload).eq("id", currentEditingRequirementId);
+      if (error) throw error;
+      alert(payload.status.startsWith("inactive-") ? "Requirement marked inactive." : "Requirement submitted again for review.");
+    } else {
+      payload.user_id = currentUser.id;
+      const { error } = await db.from("room_requirements").insert(payload);
+      if (error) throw error;
+      alert("Requirement submitted successfully! It is currently under review.");
+    }
+
+    clearRequirementForm();
+    showDashboard();
+
+  } catch (err) {
+    console.error("Supabase Requirement Error:", err);
+    alert("Something went wrong while submitting your requirement. Please try again.");
+  } finally {
+    reqSubmitBtn.innerHTML = currentEditingRequirementId ? "Update Requirement" : "Submit Requirement";
+    reqSubmitBtn.disabled = false;
   }
 }
 
