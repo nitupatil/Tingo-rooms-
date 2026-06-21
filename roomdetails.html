@@ -301,87 +301,263 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let totalImages = 0;
 
-/* GET ID FROM URL */
+/* GET ID FROM URL
+   Supports:
+   - Room Available posts from room_posts
+   - Rooms Needed / Requirement posts from requirement tables
+*/
 const params = new URLSearchParams(window.location.search);
-const roomId = params.get("id");
+const roomId =
+  params.get("id") ||
+  params.get("room") ||
+  params.get("post_id") ||
+  params.get("requirement_id");
 
-if (!roomId) {
-  alert("Invalid property ID. Returning to home.");
+const requestedType = String(
+  params.get("type") ||
+  params.get("post_type") ||
+  params.get("listing_type") ||
+  ""
+).toLowerCase();
+
+if (!roomId || roomId === "null" || roomId === "undefined") {
+  alert("Invalid post ID. Returning to home.");
   window.location.href = "index.html";
 } else {
   loadRoom();
 }
 
-/* LOAD ROOM */
-async function loadRoom() {
-  const { data, error } = await db
-    .from("room_posts")
-    .select("*")
-    .eq("id", roomId)
-    .single();
-
-  if (error || !data) {
-    alert("Property not found or has been removed.");
-    window.location.href = "index.html";
-    return;
-  }
-
-  renderRoom(data);
+/* ---------------- HELPERS ---------------- */
+function isTruthy(value) {
+  if (value === true || value === 1) return true;
+  const v = String(value || "").trim().toLowerCase();
+  return v === "true" || v === "1" || v === "yes" || v === "y";
 }
 
-/* RENDER UI */
+function firstValue(obj, keys, fallback = "") {
+  for (const key of keys) {
+    if (obj && obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== "") {
+      return obj[key];
+    }
+  }
+  return fallback;
+}
+
+function money(value, fallback = "Not mentioned") {
+  if (value === undefined || value === null || String(value).trim() === "") return fallback;
+  const num = Number(value);
+  if (!isNaN(num)) return "₹ " + num.toLocaleString("en-IN");
+  return "₹ " + value;
+}
+
+function cleanPhone(number) {
+  return String(number || "").replace(/[^\d]/g, "");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/* Tables to try.
+   Keep room_posts first for normal available rooms.
+   If URL has ?type=needed, needed tables are tried first.
+*/
+function getTableCandidates() {
+  const available = [{ table: "room_posts", kind: "available" }];
+
+  const needed = [
+    { table: "room_requirements", kind: "needed" },
+    { table: "room_requirement", kind: "needed" },
+    { table: "rooms_needed", kind: "needed" },
+    { table: "room_needed", kind: "needed" },
+    { table: "room_needs", kind: "needed" },
+    { table: "needed_rooms", kind: "needed" },
+    { table: "requirement_posts", kind: "needed" },
+    { table: "requirements", kind: "needed" }
+  ];
+
+  if (
+    requestedType.includes("need") ||
+    requestedType.includes("require") ||
+    requestedType.includes("wanted")
+  ) {
+    return [...needed, ...available];
+  }
+
+  return [...available, ...needed];
+}
+
+/* Convert both table structures into one common format */
+function normalizeRoom(raw, kind, sourceTable) {
+  const detectedKind = String(firstValue(raw, ["post_type", "listing_type", "category_type"], kind)).toLowerCase();
+  const isNeeded =
+    kind === "needed" ||
+    detectedKind.includes("need") ||
+    detectedKind.includes("require") ||
+    detectedKind.includes("wanted");
+
+  return {
+    raw,
+    id: firstValue(raw, ["id", "post_id", "requirement_id"]),
+    sourceTable,
+    postKind: isNeeded ? "needed" : "available",
+    user_id: firstValue(raw, ["user_id", "posted_by", "owner_id", "created_by", "seeker_id"]),
+    title: firstValue(raw, ["title", "post_title", "requirement_title", "room_title"], isNeeded ? "Room Requirement" : "Room Details"),
+    location: firstValue(raw, ["location", "preferred_location", "area", "locality", "address", "city"], "Location not provided"),
+    rent: firstValue(raw, ["rent", "budget", "max_budget", "monthly_budget", "expected_rent", "price", "amount"]),
+    deposit: firstValue(raw, ["deposit", "security_deposit", "max_deposit", "expected_deposit"]),
+    description: firstValue(raw, ["description", "details", "requirement", "requirements", "notes", "about"], "No additional details provided."),
+    type: firstValue(raw, ["type", "room_type", "property_type", "preferred_type", "category"], isNeeded ? "Room Needed" : "Property"),
+    images: firstValue(raw, ["images", "image_urls", "photos", "photo_urls"], ""),
+    latitude: firstValue(raw, ["latitude", "lat"]),
+    longitude: firstValue(raw, ["longitude", "lng", "lon"]),
+    contact_number: firstValue(raw, ["contact_number", "contact", "phone", "mobile"]),
+    show_contact: raw.show_contact !== undefined ? raw.show_contact : raw.show_phone !== undefined ? raw.show_phone : true,
+    whatsapp_number: firstValue(raw, ["whatsapp_number", "whatsapp", "whatsapp_no"]),
+    show_whatsapp: raw.show_whatsapp !== undefined ? raw.show_whatsapp : true,
+    brokerage_type: firstValue(raw, ["brokerage_type", "brokerage"], ""),
+    brokerage_amount: firstValue(raw, ["brokerage_amount", "brokerage_fee"], ""),
+    status: firstValue(raw, ["status"], "active")
+  };
+}
+
+/* ---------------- LOAD POST FROM AVAILABLE OR NEEDED TABLE ---------------- */
+async function loadRoom() {
+  const candidates = getTableCandidates();
+
+  for (const item of candidates) {
+    try {
+      const { data, error } = await db
+        .from(item.table)
+        .select("*")
+        .eq("id", roomId)
+        .maybeSingle();
+
+      if (data) {
+        renderRoom(normalizeRoom(data, item.kind, item.table));
+        return;
+      }
+
+      // Ignore "not found" and missing-table errors so next table can be tried.
+      if (error) {
+        console.warn(`Could not load from ${item.table}:`, error.message || error);
+      }
+    } catch (err) {
+      console.warn(`Skipped ${item.table}:`, err.message || err);
+    }
+  }
+
+  alert("Post not found or has been removed.");
+  window.location.href = "index.html";
+}
+
+/* ---------------- RENDER UI ---------------- */
 function renderRoom(room) {
+  const isNeeded = room.postKind === "needed";
+
   // Hide loading, show content
   document.getElementById("loadingState").classList.add("hidden");
   document.getElementById("contentState").classList.remove("hidden");
   document.getElementById("actionBar").classList.remove("hidden");
 
+  document.querySelector(".header-title").innerText = isNeeded ? "Requirement Details" : "Property Details";
+  document.querySelector(".section-title").innerHTML = `<span class="material-symbols-rounded">description</span> ${isNeeded ? "About Requirement" : "About Property"}`;
+
+  // Save current details page so chat/back flow can reopen the same post
+  localStorage.setItem("last_roomdetails_post", JSON.stringify({
+    id: room.id,
+    type: room.postKind,
+    table: room.sourceTable
+  }));
+
   // 1. Image Slider
   const slider = document.getElementById("imageSlider");
-  const images = (room.images && room.images.trim() !== "") ? room.images.split(",") : [];
-  
+  const images = (room.images && String(room.images).trim() !== "")
+    ? String(room.images).split(",").map(x => x.trim()).filter(Boolean)
+    : [];
+
   if (images.length === 0) {
-    slider.innerHTML = `<img src="https://via.placeholder.com/400x300?text=No+Image+Available" class="slide">`;
+    const placeholderText = isNeeded ? "Room+Requirement" : "No+Image+Available";
+    slider.innerHTML = `<img src="https://via.placeholder.com/400x300?text=${placeholderText}" class="slide">`;
     totalImages = 1;
   } else {
     totalImages = images.length;
-    slider.innerHTML = images.map(imgUrl => `<img src="${imgUrl}" class="slide">`).join("");
+    slider.innerHTML = images.map(imgUrl => `<img src="${escapeHtml(imgUrl)}" class="slide">`).join("");
   }
   document.getElementById("sliderCounter").innerText = `1 / ${totalImages}`;
 
   // 2. Text Details
   document.getElementById("roomTitle").innerText = room.title;
   document.getElementById("roomLocation").innerText = room.location;
-  document.getElementById("roomRent").innerText = "₹ " + room.rent;
-  document.getElementById("roomDeposit").innerText = "₹ " + room.deposit;
+
+  if (isNeeded) {
+    document.getElementById("roomRent").innerText = money(room.rent, "Budget not mentioned");
+    document.querySelector(".rent-label").innerText = "Budget / Month";
+    document.getElementById("roomDeposit").innerText = money(room.deposit, "Not mentioned");
+    document.querySelector(".deposit-box .rent-label").innerText = "Deposit";
+  } else {
+    document.getElementById("roomRent").innerText = money(room.rent, "₹ 0");
+    document.querySelector(".rent-label").innerText = "Per Month";
+    document.getElementById("roomDeposit").innerText = money(room.deposit, "₹ 0");
+    document.querySelector(".deposit-box .rent-label").innerText = "Security Deposit";
+  }
+
   document.getElementById("roomDesc").innerText = room.description || "No additional details provided.";
 
-  // 3. Tags (Type + Brokerage with Amount)
+  // 3. Tags
   let tagsHtml = `
     <div class="tag">
-      <span class="material-symbols-rounded" style="font-size:16px;">apartment</span> ${room.type}
+      <span class="material-symbols-rounded" style="font-size:16px;">${isNeeded ? "person_search" : "apartment"}</span>
+      ${escapeHtml(isNeeded ? "Room Needed" : room.type)}
     </div>
   `;
-  
-  if (room.brokerage_type) {
-    let brokerageDisplay = room.brokerage_type;
-    
-    // Add the amount if it's applicable/negotiable and the amount actually exists
-    if ((room.brokerage_type === "Applicable" || room.brokerage_type === "Negotiable") && room.brokerage_amount) {
-      brokerageDisplay += ` (₹ ${room.brokerage_amount})`;
-    }
-    
+
+  if (isNeeded && room.type && room.type !== "Room Needed") {
     tagsHtml += `
       <div class="tag">
-        <span class="material-symbols-rounded" style="font-size:16px;">handshake</span> ${brokerageDisplay}
+        <span class="material-symbols-rounded" style="font-size:16px;">category</span>
+        ${escapeHtml(room.type)}
       </div>
     `;
   }
+
+  if (!isNeeded && room.brokerage_type) {
+    let brokerageDisplay = room.brokerage_type;
+
+    if ((room.brokerage_type === "Applicable" || room.brokerage_type === "Negotiable") && room.brokerage_amount) {
+      brokerageDisplay += ` (${money(room.brokerage_amount)})`;
+    }
+
+    tagsHtml += `
+      <div class="tag">
+        <span class="material-symbols-rounded" style="font-size:16px;">handshake</span>
+        ${escapeHtml(brokerageDisplay)}
+      </div>
+    `;
+  }
+
+  if (room.status && room.status !== "active" && room.status !== "approved") {
+    tagsHtml += `
+      <div class="tag" style="background:#FEF3C7; color:#D97706;">
+        <span class="material-symbols-rounded" style="font-size:16px;">info</span>
+        ${escapeHtml(room.status)}
+      </div>
+    `;
+  }
+
   document.getElementById("roomTags").innerHTML = tagsHtml;
 
   // 4. Map Init
-  if(room.latitude && room.longitude) {
-    initMap(room.latitude, room.longitude);
+  const lat = parseFloat(room.latitude);
+  const lng = parseFloat(room.longitude);
+
+  if (!isNaN(lat) && !isNaN(lng)) {
+    initMap(lat, lng);
   } else {
     document.getElementById("map").innerHTML = "<div style='padding:20px; text-align:center; color:gray;'>Map location not provided</div>";
   }
@@ -390,92 +566,103 @@ function renderRoom(room) {
   renderActions(room);
 }
 
-/* SLIDER COUNTER LOGIC */
+/* ---------------- SLIDER COUNTER LOGIC ---------------- */
 function updateSliderCounter() {
   const slider = document.getElementById("imageSlider");
-  // Calculate which slide we are on based on scroll position
   const slideWidth = slider.clientWidth;
   const currentSlideIndex = Math.round(slider.scrollLeft / slideWidth) + 1;
   document.getElementById("sliderCounter").innerText = `${currentSlideIndex} / ${totalImages}`;
 }
 
-/* LEAFLET MAP */
+/* ---------------- LEAFLET MAP ---------------- */
 function initMap(lat, lng) {
-  const map = L.map('map', { zoomControl: false }).setView([lat, lng], 14);
-  L.control.zoom({ position: 'bottomright' }).addTo(map);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  const map = L.map("map", { zoomControl: false }).setView([lat, lng], 14);
+  L.control.zoom({ position: "bottomright" }).addTo(map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
   L.marker([lat, lng]).addTo(map);
 }
 
-/* ACTION BUTTONS (BOTTOM BAR) */
+/* ---------------- ACTION BUTTONS ---------------- */
 function renderActions(room) {
   const actionBar = document.getElementById("actionBar");
   let html = "";
+  const phone = cleanPhone(room.contact_number);
+  const whatsapp = cleanPhone(room.whatsapp_number || room.contact_number);
 
   // 📞 CALL
-  if (room.show_contact && room.contact_number) {
+  if (isTruthy(room.show_contact) && phone) {
     html += `
-      <button class="btn btn-call" onclick="window.location.href='tel:${room.contact_number}'">
+      <button class="btn btn-call" onclick="window.location.href='tel:${phone}'">
         <span class="material-symbols-rounded">call</span> Call
       </button>
     `;
   }
 
   // 💬 WHATSAPP
-  if (room.show_whatsapp && room.whatsapp_number) {
+  if (isTruthy(room.show_whatsapp) && whatsapp) {
     html += `
-      <button class="btn btn-whatsapp" onclick="window.open('https://wa.me/${room.whatsapp_number}', '_blank')">
+      <button class="btn btn-whatsapp" onclick="window.open('https://wa.me/${whatsapp}', '_blank')">
         <span class="material-symbols-rounded">chat</span> WA
       </button>
     `;
   }
 
-  // 💬 IN-APP CHAT (ALWAYS AVAILABLE)
-  html += `
-    <button class="btn btn-chat" onclick="startChat('${room.user_id}', '${room.id}')">
-      <span class="material-symbols-rounded">forum</span> Chat
+  // 💬 IN-APP CHAT
+  if (room.user_id) {
+    html += `
+      <button class="btn btn-chat" onclick="startChat('${escapeHtml(room.user_id)}', '${escapeHtml(room.id)}', '${room.postKind}')">
+        <span class="material-symbols-rounded">forum</span> Chat
+      </button>
+    `;
+  } else {
+    html += `
+      <button class="btn btn-chat" onclick="alert('Chat is not available for this post.')">
+        <span class="material-symbols-rounded">forum</span> Chat
+      </button>
+    `;
+  }
+
+  actionBar.innerHTML = html || `
+    <button class="btn btn-chat" onclick="history.back()">
+      <span class="material-symbols-rounded">arrow_back</span> Back
     </button>
   `;
 
-  actionBar.innerHTML = html;
-
-  // TRIGGER AUTO-ACTION IF PRESENT
+  // Trigger auto-action if present
   const autoAction = params.get("auto");
-  const autoInfo = params.get("info");
-  
-  if (autoAction === 'call' && autoInfo && room.show_contact) {
+  const autoInfo = cleanPhone(params.get("info"));
+
+  if (autoAction === "call" && autoInfo && isTruthy(room.show_contact)) {
     setTimeout(() => { window.location.href = `tel:${autoInfo}`; }, 300);
-  } else if (autoAction === 'wa' && autoInfo && room.show_whatsapp) {
-    setTimeout(() => { window.open(`https://wa.me/${autoInfo}`, '_blank'); }, 300);
+  } else if (autoAction === "wa" && autoInfo && isTruthy(room.show_whatsapp)) {
+    setTimeout(() => { window.open(`https://wa.me/${autoInfo}`, "_blank"); }, 300);
   }
 }
 
-/* CHAT REDIRECT */
-function startChat(userId, roomId) {
+/* ---------------- CHAT REDIRECT ---------------- */
+function startChat(userId, postId, postKind) {
   const user = JSON.parse(localStorage.getItem("user"));
 
-  // Check if trying to chat with self
-  if(user && user.id === userId) {
-      alert("This is your own property!");
-      return;
+  if (user && user.id === userId) {
+    alert(postKind === "needed" ? "This is your own requirement post!" : "This is your own property!");
+    return;
   }
 
   if (!user) {
-    localStorage.setItem("chat_redirect", JSON.stringify({ userId, roomId }));
-    alert("Please log in to chat with the owner.");
+    localStorage.setItem("chat_redirect", JSON.stringify({ userId, roomId: postId, type: postKind }));
+    alert("Please log in to chat.");
     window.location.href = "user.html";
     return;
   }
 
-  // Go to chat.html (the combined chat page we created)
-  window.location.href = `chat.html?user=${userId}&room=${roomId}&source=roomdetails`;
+  // source=roomdetails keeps browser history, so coming back opens the same details post.
+  window.location.href = `chat.html?user=${encodeURIComponent(userId)}&room=${encodeURIComponent(postId)}&source=roomdetails&type=${encodeURIComponent(postKind)}`;
 }
 
-// Keyframe for loading spinner
-const style = document.createElement('style');
+// Loading spinner
+const style = document.createElement("style");
 style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
 document.head.appendChild(style);
-
 </script>
 
 </body>
