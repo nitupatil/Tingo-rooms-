@@ -262,6 +262,55 @@ button:active {
   background: #FEE2E2;
 }
 
+
+
+.profile-card {
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  width: 260px;
+  height: 160px;
+  transform: translateX(-50%);
+  border-radius: 0 0 140px 140px;
+  background: radial-gradient(circle at 30% 30%, rgba(99,102,241,0.25), transparent 34%),
+              linear-gradient(135deg, rgba(99,102,241,0.18), rgba(6,182,212,0.16));
+  pointer-events: none;
+}
+
+.avatar-wrapper {
+  padding: 5px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366F1, #06B6D4, #22C55E);
+  box-shadow: 0 14px 28px rgba(79, 70, 229, 0.16);
+}
+
+.avatar {
+  background: #F1F5F9;
+  display: block;
+}
+
+.session-note {
+  margin: 18px 0 22px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #F8FAFC;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.session-note strong {
+  color: var(--text-main);
+}
+
 /* BOTTOM NAV */
 @media (max-width: 899px) {
   .bottom-nav {
@@ -451,6 +500,9 @@ button:active {
       </div>
       <div class="profile-name" id="profileName">Loading...</div>
       <div class="profile-email" id="profileEmail"></div>
+      <div class="session-note" id="sessionNote">
+        <strong>Active session:</strong> This device is your latest login device.
+      </div>
       
       <button class="logout-btn" onclick="logout()">
         <span class="material-symbols-rounded" style="font-size: 20px;">logout</span>
@@ -493,38 +545,224 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentEmail = "";
 let timerInterval;
+let sessionCheckInterval;
 
-/* INIT */
-window.onload = () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (user) showProfile(user);
-};
+/* ---------------- USER + SESSION HELPERS ---------------- */
+function getStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch (e) {
+    return null;
+  }
+}
 
-/* ONESIGNAL REGISTRATION LOGIC */
-async function saveOneSignalId(user) {
+function sanitizeUser(user) {
+  const safe = { ...(user || {}) };
+  delete safe.password;
+  delete safe.otp;
+  delete safe.otp_expiry;
+  return safe;
+}
+
+function storeUser(user) {
+  localStorage.setItem("user", JSON.stringify(sanitizeUser(user)));
+}
+
+function generateSessionToken() {
+  if (window.crypto && crypto.getRandomValues) {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+  }
+  return Date.now().toString(36) + "_" + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
+function getDeviceName() {
+  const ua = navigator.userAgent || "";
+  let browser = "Browser";
+  if (/Edg\//.test(ua)) browser = "Edge";
+  else if (/Chrome\//.test(ua)) browser = "Chrome";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+  else if (/Safari\//.test(ua)) browser = "Safari";
+
+  let device = "Desktop";
+  if (/Android/i.test(ua)) device = "Android";
+  else if (/iPhone/i.test(ua)) device = "iPhone";
+  else if (/iPad/i.test(ua)) device = "iPad";
+  else if (/Windows/i.test(ua)) device = "Windows";
+  else if (/Macintosh|Mac OS/i.test(ua)) device = "Mac";
+
+  return `${browser} on ${device}`;
+}
+
+function getDefaultAvatar(gender) {
+  const male = "https://i.ibb.co/wZVNcCDt/maleavt.png";
+  const female = "https://i.ibb.co/SXCj3b1q/femaleavt.png";
+  if (!gender) return male;
+  const g = String(gender).toLowerCase();
+  if (g.includes("f")) return female;
+  return male;
+}
+
+function isUserBlocked(user) {
+  if (!user) return "Account not found.";
+  if (user.is_active === false) return "Your account is inactive.";
+  if (user.login_enabled === false) return "Login is disabled for this account.";
+  if (user.account_health && user.account_health !== "healthy") {
+    return user.block_reason ? `Account ${user.account_health}: ${user.block_reason}` : `Account is ${user.account_health}.`;
+  }
+  return "";
+}
+
+function logoutLocal(message) {
+  localStorage.removeItem("user");
+  if (message) alert(message);
+  location.reload();
+}
+
+async function fetchFreshUser(userId) {
+  const { data, error } = await db
+    .from("users")
+    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at")
+    .eq("id", userId)
+    .single();
+
+  if (error) {
+    console.warn("Session user fetch error:", error);
+    return null;
+  }
+  return data;
+}
+
+async function validateCurrentSession(options = {}) {
+  const silent = options.silent === true;
+  const localUser = getStoredUser();
+  if (!localUser || !localUser.id) return false;
+
+  const freshUser = await fetchFreshUser(localUser.id);
+  if (!freshUser) {
+    if (!silent) logoutLocal("Session expired. Please login again.");
+    return false;
+  }
+
+  const blockMessage = isUserBlocked(freshUser);
+  if (blockMessage) {
+    logoutLocal(blockMessage);
+    return false;
+  }
+
+  const dbToken = freshUser.active_session_token || "";
+  const localToken = localUser.active_session_token || "";
+
+  if (dbToken && localToken && dbToken !== localToken) {
+    logoutLocal("Your account was logged in on another device. This device has been logged out.");
+    return false;
+  }
+
+  if (dbToken && !localToken) {
+    logoutLocal("Session changed. Please login again.");
+    return false;
+  }
+
+  const merged = { ...localUser, ...freshUser };
+  storeUser(merged);
+  showProfile(merged);
+  return true;
+}
+
+/* ---------------- ONESIGNAL V16 HELPERS ---------------- */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function getLatestOneSignalSubscriptionId(user) {
   return new Promise((resolve) => {
-    const OneSignal = window.OneSignalDeferred || window.OneSignal || [];
-    OneSignal.push(async function(OneSignal) {
-      try {
-        const playerId = await OneSignal.getUserId();
-        if (playerId) {
-          // Using your existing Supabase client is safer than a raw fetch
-          await db.from("users")
-            .update({ onesignal_id: playerId })
-            .eq("id", user.id);
+    let resolved = false;
+    const finish = (value) => {
+      if (resolved) return;
+      resolved = true;
+      resolve(value || null);
+    };
+
+    const OneSignalQueue = window.OneSignalDeferred || window.OneSignal || [];
+
+    try {
+      OneSignalQueue.push(async function(OneSignal) {
+        try {
+          if (OneSignal.User && typeof OneSignal.User.login === "function") {
+            await OneSignal.User.login(String(user.id));
+          }
+
+          for (let i = 0; i < 14; i++) {
+            const subId = OneSignal.User && OneSignal.User.PushSubscription
+              ? OneSignal.User.PushSubscription.id
+              : null;
+
+            if (subId) {
+              finish(subId);
+              return;
+            }
+            await delay(250);
+          }
+        } catch (err) {
+          console.error("OneSignal registration error:", err);
         }
-      } catch (err) {
-        console.error("OneSignal Error:", err);
-      }
-      resolve();
-    });
-    
-    // Safety fallback: resolve after 2 seconds in case OneSignal is blocked by an adblocker
-    setTimeout(resolve, 2000); 
+        finish(null);
+      });
+    } catch (err) {
+      console.error("OneSignal queue error:", err);
+      finish(null);
+    }
+
+    setTimeout(() => finish(null), 4500);
   });
 }
 
-/* UI SWITCHES */
+async function createLatestLoginSession(user) {
+  const sessionToken = generateSessionToken();
+  const deviceName = getDeviceName();
+  const oneSignalId = await getLatestOneSignalSubscriptionId(user);
+
+  const payload = {
+    active_session_token: sessionToken,
+    active_device_name: deviceName,
+    last_login_at: new Date().toISOString()
+  };
+
+  if (oneSignalId) {
+    payload.onesignal_id = oneSignalId;
+  }
+
+  const { data, error } = await db
+    .from("users")
+    .update(payload)
+    .eq("id", user.id)
+    .select("id,name,email,mobile_no,is_active,created_at,avatar_url,gender,is_verified,onesignal_id,account_health,block_reason,login_enabled,active_session_token,active_device_name,last_login_at")
+    .single();
+
+  if (error) {
+    console.error("Session update error:", error);
+    alert("Login session could not be saved. Please try again.");
+    return null;
+  }
+
+  const updatedUser = data || { ...user, ...payload };
+  storeUser(updatedUser);
+  return updatedUser;
+}
+
+/* ---------------- INIT ---------------- */
+window.onload = async () => {
+  const user = getStoredUser();
+  if (user) {
+    await validateCurrentSession({ silent: false });
+    sessionCheckInterval = setInterval(() => {
+      validateCurrentSession({ silent: true });
+    }, 15000);
+  }
+};
+
+/* ---------------- UI SWITCHES ---------------- */
 function showSignup() {
   document.getElementById("loginBox").classList.add("hidden");
   document.getElementById("signupBox").classList.remove("hidden");
@@ -533,11 +771,12 @@ function showSignup() {
 
 function showLogin() {
   document.getElementById("signupBox").classList.add("hidden");
+  document.getElementById("otpBox").classList.add("hidden");
   document.getElementById("loginBox").classList.remove("hidden");
   document.getElementById("pageTitle").innerText = "My Account";
 }
 
-/* TIMER */
+/* ---------------- TIMER ---------------- */
 function startTimer() {
   let time = 300;
   const timerElement = document.getElementById("timer");
@@ -548,7 +787,7 @@ function startTimer() {
     let min = Math.floor(time / 60);
     let sec = time % 60;
 
-    timerElement.innerText = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    timerElement.innerText = `${String(min).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
 
     time--;
 
@@ -559,7 +798,7 @@ function startTimer() {
   }, 1000);
 }
 
-/* SEND OTP */
+/* ---------------- SEND OTP ---------------- */
 async function sendOTP(email, otp) {
   const { data } = await db.from("app_config").select("email_api_url").single();
 
@@ -575,18 +814,18 @@ async function sendOTP(email, otp) {
   });
 }
 
-/* SIGNUP */
+/* ---------------- SIGNUP ---------------- */
 async function signup() {
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const mobile = document.getElementById("mobile").value;
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const mobile = document.getElementById("mobile").value.trim();
   const gender = document.getElementById("gender").value;
-  const avatar = document.getElementById("avatar").value;
+  const avatar = document.getElementById("avatar").value.trim();
   const password = document.getElementById("password").value;
 
-  if(!email || !password || !name) {
-      alert("Name, Email, and Password are required.");
-      return;
+  if (!email || !password || !name) {
+    alert("Name, Email, and Password are required.");
+    return;
   }
 
   const { data: existing } = await db
@@ -612,9 +851,7 @@ async function signup() {
       .eq("email", email);
 
     await sendOTP(email, otp);
-
     alert("User already registered but not verified. OTP resent.");
-
   } else {
     await db.from("users").insert({
       name: name,
@@ -629,20 +866,18 @@ async function signup() {
     });
 
     await sendOTP(email, otp);
-
     alert("OTP sent to your email.");
   }
 
   document.getElementById("signupBox").classList.add("hidden");
   document.getElementById("otpBox").classList.remove("hidden");
   document.getElementById("pageTitle").innerText = "Verification";
-
   startTimer();
 }
 
-/* RESEND OTP */
+/* ---------------- RESEND OTP ---------------- */
 async function resendOTP() {
-  if(!currentEmail) return;
+  if (!currentEmail) return;
 
   const otp = Math.floor(100000 + Math.random() * 900000);
   const expiry = new Date(Date.now() + 5 * 60000).toISOString();
@@ -652,13 +887,11 @@ async function resendOTP() {
     .eq("email", currentEmail);
 
   await sendOTP(currentEmail, otp);
-
   alert("OTP resent");
-
   startTimer();
 }
 
-/* VERIFY OTP */
+/* ---------------- VERIFY OTP ---------------- */
 async function verifyOTP() {
   const otp = document.getElementById("otpInput").value;
 
@@ -667,7 +900,7 @@ async function verifyOTP() {
     .select("*")
     .eq("email", currentEmail)
     .eq("otp", otp)
-    .gt("otp_expiry", new Date().toISOString()); 
+    .gt("otp_expiry", new Date().toISOString());
 
   if (!data || data.length === 0) {
     alert("Invalid or expired OTP");
@@ -681,18 +914,17 @@ async function verifyOTP() {
     .eq("email", currentEmail);
 
   user.is_verified = true;
-  localStorage.setItem("user", JSON.stringify(user));
 
-  // Wait for OneSignal ID to be captured and saved before redirecting
-  await saveOneSignalId(user);
+  const finalUser = await createLatestLoginSession(user);
+  if (!finalUser) return;
 
   alert("Account created & logged in!");
   handleRedirect();
 }
 
-/* LOGIN */
+/* ---------------- LOGIN ---------------- */
 async function login() {
-  const email = document.getElementById("loginEmail").value;
+  const email = document.getElementById("loginEmail").value.trim().toLowerCase();
   const password = document.getElementById("loginPassword").value;
 
   const { data } = await db
@@ -708,10 +940,14 @@ async function login() {
   }
 
   const user = data[0];
-  localStorage.setItem("user", JSON.stringify(user));
-  
-  // Wait for OneSignal ID to be captured and saved before redirecting
-  await saveOneSignalId(user);
+  const blockMessage = isUserBlocked(user);
+  if (blockMessage) {
+    alert(blockMessage);
+    return;
+  }
+
+  const finalUser = await createLatestLoginSession(user);
+  if (!finalUser) return;
 
   handleRedirect();
 }
@@ -719,6 +955,7 @@ async function login() {
 function handleRedirect() {
   const params = new URLSearchParams(window.location.search);
   const redirect = params.get("redirect");
+
   if (redirect) {
     if (redirect === "chat") {
       const chatRedirect = JSON.parse(localStorage.getItem("chat_redirect"));
@@ -737,47 +974,62 @@ function handleRedirect() {
   }
 }
 
-/* PROFILE */
+/* ---------------- PROFILE ---------------- */
 function showProfile(user) {
   document.getElementById("loginBox").classList.add("hidden");
+  document.getElementById("signupBox").classList.add("hidden");
+  document.getElementById("otpBox").classList.add("hidden");
   document.getElementById("profileBox").classList.remove("hidden");
   document.getElementById("pageTitle").innerText = "My Profile";
 
   document.getElementById("profileName").innerText = user.name || "User";
-  document.getElementById("profileEmail").innerText = user.email;
+  document.getElementById("profileEmail").innerText = user.email || "";
 
-  function getDefaultAvatar(gender) {
-    const m = 'https://i.ibb.co/wZVNcCDt/maleavt.png';
-    const f = 'https://i.ibb.co/SXCj3b1q/femaleavt.png';
-    if (!gender) return m;
-    const g = String(gender).toLowerCase();
-    if (g.includes('f')) return f;
-    return m;
-  }
+  const avatarEl = document.getElementById("profileAvatar");
+  const fallback = getDefaultAvatar(user.gender);
+  avatarEl.onerror = () => {
+    avatarEl.onerror = null;
+    avatarEl.src = fallback;
+  };
+  avatarEl.src = user.avatar_url && user.avatar_url.trim() !== "" ? user.avatar_url : fallback;
 
-  if (user.avatar_url && user.avatar_url.trim() !== "") {
-    document.getElementById("profileAvatar").src = user.avatar_url;
-  } else {
-    document.getElementById("profileAvatar").src = getDefaultAvatar(user.gender);
+  const sessionNote = document.getElementById("sessionNote");
+  if (sessionNote) {
+    const device = user.active_device_name || getDeviceName();
+    const time = user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "now";
+    sessionNote.innerHTML = `<strong>Active session:</strong> ${device}<br><span>Latest login: ${time}</span>`;
   }
 }
 
-/* LOGOUT */
-function logout() {
+/* ---------------- LOGOUT ---------------- */
+async function logout() {
+  const user = getStoredUser();
+
+  if (user && user.id && user.active_session_token) {
+    try {
+      await db.from("users")
+        .update({ active_session_token: null, active_device_name: null })
+        .eq("id", user.id)
+        .eq("active_session_token", user.active_session_token);
+    } catch (err) {
+      console.warn("Logout session cleanup error:", err);
+    }
+  }
+
   localStorage.removeItem("user");
   location.reload();
 }
 
-/* NAVIGATION (Bottom Nav) */
+/* ---------------- NAVIGATION ---------------- */
 function go(page) {
-  const isHome = page.endsWith('index.html') || page === 'index.html' || page === 'index';
+  const isHome = page.endsWith("index.html") || page === "index.html" || page === "index";
   if (isHome) {
     if (window.self !== window.top) {
       try {
-        if (parent && typeof parent.closePanel === 'function') {
+        if (parent && typeof parent.closePanel === "function") {
           parent.closePanel();
-          if (parent.location && !parent.location.pathname.endsWith('index.html')) {
-            parent.location.href = 'index.html';
+          if (parent.location && !parent.location.pathname.endsWith("index.html")) {
+            parent.location.href = "index.html";
           }
           return;
         }
@@ -789,7 +1041,7 @@ function go(page) {
 
   if (window.self !== window.top) {
     try {
-      if (parent && typeof parent.openPanel === 'function' && parent.innerWidth >= 900) {
+      if (parent && typeof parent.openPanel === "function" && parent.innerWidth >= 900) {
         parent.openPanel(page);
         return;
       }
@@ -798,13 +1050,15 @@ function go(page) {
   window.location.href = page;
 }
 
-function checkLoginNav(page) {
-  const user = JSON.parse(localStorage.getItem("user"));
+async function checkLoginNav(page) {
+  const user = getStoredUser();
   if (!user) {
     alert("Please login first to access this feature.");
-  } else {
-    window.location.href = page;
+    return;
   }
+
+  const valid = await validateCurrentSession({ silent: false });
+  if (valid) window.location.href = page;
 }
 </script>
 
